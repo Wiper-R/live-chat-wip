@@ -6,18 +6,18 @@ import {
 import { NextResponse } from "next/server";
 
 export default withMiddlewareAuthRequired(async function middleware(req) {
-  if (!req.nextUrl.pathname.startsWith("/api/auth")) {
+  if (req.nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
-  const requestHeaders = new Headers(req.headers);
-  const user = await getSession();
-  requestHeaders.set("Authorization", `Bearer ${user?.idToken}`);
   const session = await getSession();
   const headers = new Headers(req.headers);
 
   if (session) {
+    console.log("Session exists");
     headers.append("Authorization", `Bearer ${session.accessToken}`);
+  } else {
+    console.log("Session doesn't exists");
   }
 
   return NextResponse.next({
@@ -27,6 +27,6 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
   });
 });
 
-// export const config = {
-//   matcher: ["/"],
-// };
+export const config = {
+  matcher: ["/:path*"],
+};
