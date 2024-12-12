@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 export function useMediaStream(stream: MediaStream) {
-  const [audio, setAudio] = useState(false);
-  const [video, setVideo] = useState(false);
+  const [audio, setAudio] = useState(stream.getAudioTracks()[0].enabled);
+  const [video, setVideo] = useState(stream.getVideoTracks()[0].enabled);
 
   const toggleAudio = () => {
     setAudio((audio) => !audio);
