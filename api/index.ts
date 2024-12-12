@@ -3,7 +3,13 @@ import { auth } from "express-oauth2-jwt-bearer";
 import "dotenv/config";
 import axios from "axios";
 import env from "./env";
+import { mountRouters } from "./routers";
+import cors from "cors";
 const app = express();
+app.use(express.json());
+app.use(cors({ origin: "http://localhost:3000" }));
+app.use(auth());
+mountRouters(app);
 
 const issuerClient = axios.create({
   baseURL: env.ISSUER_BASE_URL,
@@ -12,7 +18,6 @@ const issuerClient = axios.create({
 
 const port = process.env.PORT || 8080;
 
-app.use(auth());
 app.get("/api", (req, res) => {
   res.json({ message: "Hello" });
 });
