@@ -27,6 +27,6 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
   });
 });
 
-export const config = {
-  matcher: ["/private/:path*", "/api/:path*"],
-};
+// export const config = {
+//   matcher: ["/"],
+// };
