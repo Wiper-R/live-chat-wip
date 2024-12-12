@@ -1,17 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useMediaStream } from "@/hooks/useMediaStream";
+import { useEffect, useRef, useState } from "react";
 
 const PeerPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then((stream) => {
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      });
-  }, []);
+  const { toggleAudio, toggleVideo, stream } = useMediaStream();
+  if (stream && videoRef.current) videoRef.current.srcObject = stream;
 
   return (
     <div>
@@ -21,6 +16,8 @@ const PeerPage = () => {
         playsInline
         className="-scale-x-100 mx-auto w-72"
       />
+      <button onClick={toggleVideo}>Toggle Video</button>
+      <button onClick={toggleAudio}>Toggle Audio</button>
     </div>
   );
 };
