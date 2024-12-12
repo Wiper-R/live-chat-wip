@@ -1,12 +1,14 @@
 "use client";
 
 import { useMediaStream } from "@/hooks/useMediaStream";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 const PeerPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toggleAudio, toggleVideo, stream } = useMediaStream();
-  if (stream && videoRef.current) videoRef.current.srcObject = stream;
+  useEffect(() => {
+    if (stream && videoRef.current) videoRef.current.srcObject = stream;
+  }, [stream]);
 
   return (
     <div>

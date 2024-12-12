@@ -6,7 +6,7 @@ import {
 import { NextResponse } from "next/server";
 
 export default withMiddlewareAuthRequired(async function middleware(req) {
-  if (req.nextUrl.pathname.startsWith("/api/auth")) {
+  if (req.nextUrl.pathname.startsWith("/api/auth/")) {
     return NextResponse.next();
   }
 
@@ -15,6 +15,7 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
 
   if (session) {
     console.log("Session exists");
+    console.log(session.user);
     headers.append("Authorization", `Bearer ${session.accessToken}`);
   } else {
     console.log("Session doesn't exists");
