@@ -14,11 +14,8 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
   const headers = new Headers(req.headers);
 
   if (session) {
-    console.log("Session exists");
-    console.log(session.user);
     headers.append("Authorization", `Bearer ${session.accessToken}`);
   } else {
-    console.log("Session doesn't exists");
   }
 
   return NextResponse.next({
