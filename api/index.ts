@@ -1,8 +1,6 @@
 import express from "express";
 import { auth } from "express-oauth2-jwt-bearer";
 import "dotenv/config";
-import axios from "axios";
-import env from "./env";
 import { mountRouters } from "./routers";
 import cors from "cors";
 const app = express();
@@ -11,11 +9,6 @@ app.use(cors({ origin: "http://localhost:3000" }));
 app.use(auth());
 mountRouters(app);
 
-const issuerClient = axios.create({
-  baseURL: env.ISSUER_BASE_URL,
-  responseType: "json",
-});
-
 const port = process.env.PORT || 8080;
 
 app.get("/api", (req, res) => {
@@ -23,10 +16,6 @@ app.get("/api", (req, res) => {
 });
 
 app.get("/api/authorized", async (req, res) => {
-  const resp = await issuerClient.get("/userinfo", {
-    headers: { Authorization: `Bearer ${req.auth?.token}` },
-  });
-  console.log(resp.data);
   res.send("Secured Resource");
 });
 
