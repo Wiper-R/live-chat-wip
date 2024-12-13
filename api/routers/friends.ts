@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { SendFriendRequest } from "@live-chat/shared/validators/friends";
+import {
+  AcceptFriendRequest,
+  RemoveFriend,
+  SendFriendRequest,
+} from "@live-chat/shared/validators/friends";
 import prisma from "../prisma";
 import { getUser } from "./user";
 
@@ -35,22 +39,75 @@ router.post("/requests", async (req, res) => {
 });
 
 router.post("/requests/:requestId/reject", async (req, res) => {
-  console.log(`Rejected friend request of ${req.params.requestId}`);
+  const data = await AcceptFriendRequest.parseAsync(req.params);
+  const friendRequest = await prisma.friendRequest.findFirst({
+    where: { id: data.requestId },
+  });
+  if (!friendRequest) {
+    res.status(404).json({});
+    return;
+  }
+  const user = await getUser(req.auth?.payload.sub!);
+  if (!user || friendRequest.receiverId != user.id) {
+    res.status(401).json({});
+    return;
+  }
+
+  await prisma.friendRequest.delete({ where: { id: friendRequest.id } });
   res.json({ message: `Rejected friend request of ${req.params.requestId}` });
 });
 
 router.post("/requests/:requestId/accept", async (req, res) => {
-  console.log(`Accepted friend request of ${req.params.requestId}`);
+  const data = await AcceptFriendRequest.parseAsync(req.params);
+  const friendRequest = await prisma.friendRequest.findFirst({
+    where: { id: data.requestId },
+  });
+  if (!friendRequest) {
+    res.status(404).json({});
+    return;
+  }
+  const user = await getUser(req.auth?.payload.sub!);
+  if (!user || friendRequest.receiverId != user.id) {
+    res.status(401).json({});
+    return;
+  }
+  await prisma.friendship.create({
+    data: {
+      Users: { connect: [{ id: user.id }, { id: friendRequest.senderId }] },
+    },
+  });
+  await prisma.friendRequest.delete({ where: { id: friendRequest.id } });
   res.json({ message: `Accepted friend request of ${req.params.requestId}` });
 });
 
 router.delete("/:friendId", async (req, res) => {
-  console.log(`Removed friend ${req.params.friendId}`);
+  const data = await RemoveFriend.parseAsync(req.params);
+  const user = await getUser(req.auth?.payload.sub!);
+  if (!user || user.id == data.friendId) {
+    res.status(400).json({});
+    return;
+  }
+  const friendship = await prisma.friendship.findFirst({
+    where: { Users: { some: { id: data.friendId } } },
+  });
+  if (!friendship) {
+    res.status(404).json({});
+    return;
+  }
+  await prisma.friendship.delete({ where: { id: friendship.id } });
   res.json({ message: `Removed friend ${req.params.friendId}` });
 });
 
 router.get("/", async (req, res) => {
-  res.json({ data: [] });
+  const user = await getUser(req.auth?.payload.sub!);
+
+  const friendList = await prisma.friendship.findMany({
+    where: { Users: { some: { id: user!.id } } },
+    include: { Users: { where: { id: { not: user!.id } } } },
+  });
+
+  const friends = friendList.map((fl) => fl.Users[0]);
+  res.json(friends);
 });
 
 export default router;

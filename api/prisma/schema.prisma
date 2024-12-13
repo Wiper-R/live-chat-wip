@@ -21,6 +21,7 @@ model User {
   sentRequests     FriendRequest[] @relation("SentRequests")
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
   Account          Account[]
+  Friendship       Friendship[]
 }
 
 model Account {
@@ -37,4 +38,9 @@ model FriendRequest {
   receiver   User @relation("ReceivedRequests", fields: [receiverId], references: [id])
 
   @@unique([senderId, receiverId])
+}
+
+model Friendship {
+  id    Int    @id @default(autoincrement())
+  Users User[]
 }
