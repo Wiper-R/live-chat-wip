@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import { auth } from "express-oauth2-jwt-bearer";
 import "dotenv/config";
 import { mountRouters } from "./routers";
@@ -7,17 +7,17 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(auth());
-mountRouters(app);
 
-const port = process.env.PORT || 8080;
+const api = Router();
+mountRouters(api);
 
-app.get("/api", (req, res) => {
-  res.json({ message: "Hello" });
-});
+app.use("/api", api);
 
-app.get("/api/authorized", async (req, res) => {
+api.get("/authorized", async (req, res) => {
   res.send("Secured Resource");
 });
+
+const port = process.env.PORT || 8080;
 
 app.listen(port);
 console.log("Running on port ", port);
