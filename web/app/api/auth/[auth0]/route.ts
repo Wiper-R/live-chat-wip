@@ -11,11 +11,15 @@ const afterCallback = async (
   session: Session,
   state?: { [key: string]: any }
 ) => {
-  console.log("I am getting called after callback", session);
   if (session.user) {
-    console.log("user found", session.user);
+    const headers = new Headers();
+    headers.append("Authorization", `Bearer ${session.accessToken}`);
+    // TODO: Change this backend url
+    await fetch("http://localhost:5000/api/user", {
+      method: "POST",
+      headers,
+    });
   } else {
-    console.log("user not found", session);
   }
 
   return session;
@@ -23,7 +27,6 @@ const afterCallback = async (
 
 export const GET = handleAuth({
   async callback(req: NextRequest, ctx: AppRouteHandlerFnContext) {
-    console.log(ctx);
     return await handleCallback(req, ctx, {
       afterCallback,
     });

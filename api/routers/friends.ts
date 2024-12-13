@@ -1,12 +1,37 @@
 import { Router } from "express";
 import { SendFriendRequest } from "@live-chat/shared/validators/friends";
+import prisma from "../prisma";
+import { getUser } from "./user";
 
 const router = Router({});
 
 router.post("/requests", async (req, res) => {
   const data = await SendFriendRequest.parseAsync(req.body);
-  console.log(`Sent friend request to ${data.userId}`);
-  res.json({ message: `Sent friend request to ${data.userId}` });
+  const user = await getUser(req.auth?.payload.sub!);
+  const receiver = await prisma.user.findFirst({
+    where: { username: data.username },
+  });
+
+  if (!receiver || !user) {
+    // Throw error / bad request
+    res.status(400).send({});
+    return;
+  }
+
+  if (receiver.id == user.id) {
+    res.status(400).send({
+      message: "Can't send request to yourself",
+    });
+    return;
+  }
+
+  await prisma.friendRequest.create({
+    data: {
+      receiverId: receiver.id,
+      senderId: user.id,
+    },
+  });
+  res.json({ message: `Sent friend request to ${data.username}` });
 });
 
 router.post("/requests/:requestId/reject", async (req, res) => {
