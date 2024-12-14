@@ -2,10 +2,11 @@ import { Router } from "express";
 import {
   AcceptFriendRequest,
   RemoveFriend,
+  SearchFriends,
   SendFriendRequest,
 } from "@live-chat/shared/validators/friends";
 import prisma from "../prisma";
-import { getUser } from "./user";
+import { getUser } from "./users";
 
 const router = Router({});
 
@@ -99,10 +100,22 @@ router.delete("/:friendId", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
+  const data = await SearchFriends.parseAsync(req.query);
   const user = await getUser(req.auth?.payload.sub!);
 
+  const search = data.q || "";
+
   const friendList = await prisma.friendship.findMany({
-    where: { Users: { some: { id: user!.id } } },
+    where: {
+      Users: {
+        some: {
+          AND: [
+            { id: user!.id },
+            { username: { contains: search, mode: "insensitive" } },
+          ],
+        },
+      },
+    },
     include: { Users: { where: { id: { not: user!.id } } } },
   });
 

@@ -1,4 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { FriendsDialog } from "./add-friend-dialog";
+
 function SideToolbox() {
   return (
     <div className="mt-auto w-full p-4 border-t">
@@ -9,8 +11,9 @@ function SideToolbox() {
 
 function ChatSearch() {
   return (
-    <div className="w-full p-4">
+    <div className="w-full p-4 flex gap-2">
       <Input placeholder="Search a chat" />
+      <FriendsDialog />
     </div>
   );
 }

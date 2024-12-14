@@ -13,3 +13,7 @@ export const RejectFriendRequest = AcceptFriendRequest;
 export const RemoveFriend = z.object({
   friendId: z.coerce.number(),
 });
+
+export const SearchFriends = z.object({
+  q: z.string().optional(),
+});

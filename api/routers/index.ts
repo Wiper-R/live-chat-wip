@@ -1,8 +1,8 @@
 import { Router } from "express";
 import friendsRouter from "./friends";
-import userRouter from "./user";
+import usersRouter from "./users";
 
 export function mountRouters(router: Router) {
   router.use("/friends", friendsRouter);
-  router.use("/user", userRouter);
+  router.use("/users", usersRouter);
 }

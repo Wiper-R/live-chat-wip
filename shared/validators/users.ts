@@ -6,3 +6,7 @@ export const CreateUserRequest = z.object({
 });
 
 export type CreateUserRequest = z.infer<typeof CreateUserRequest>;
+
+export const SearchUsers = z.object({
+  q: z.string(),
+});

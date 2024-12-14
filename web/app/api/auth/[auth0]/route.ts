@@ -15,7 +15,7 @@ const afterCallback = async (
     const headers = new Headers();
     headers.append("Authorization", `Bearer ${session.accessToken}`);
     // TODO: Change this backend url
-    await fetch("http://localhost:5000/api/user", {
+    await fetch("http://localhost:5000/api/users", {
       method: "POST",
       headers,
     });

@@ -1,8 +1,10 @@
 import { Router } from "express";
 import prisma from "../prisma";
 import auth0Axios from "../lib/auth0-axios";
-import { CreateUserRequest } from "@live-chat/shared/validators/user";
-import { User } from "@prisma/client";
+import {
+  CreateUserRequest,
+  SearchUsers,
+} from "@live-chat/shared/validators/users";
 
 const router = Router();
 
@@ -67,6 +69,27 @@ router.get("/", async (req, res) => {
     user = await createUser(accessToken);
   }
   res.json({ ...user });
+});
+
+router.get("/search", async (req, res) => {
+  const data = await SearchUsers.parseAsync(req.query);
+  const user = await getUser(req.auth?.payload.sub!);
+  if (!user) {
+    res.status(401).json({});
+    return;
+  }
+  if (!data.q) {
+    res.json([]);
+    return;
+  }
+  const users = await prisma.user.findMany({
+    where: {
+      username: { contains: data.q, mode: "insensitive" },
+      Friendship: { none: { Users: { some: { id: user.id } } } },
+      id: { not: user.id },
+    },
+  });
+  res.json(users);
 });
 
 export default router;
