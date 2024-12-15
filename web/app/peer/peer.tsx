@@ -1,6 +1,6 @@
 "use client";
 
-import { useMediaStream } from "@/hooks/useMediaStream";
+import { useMediaStream } from "@/hooks/use-media-stream";
 import { useEffect, useRef } from "react";
 
 const PeerPage = () => {
