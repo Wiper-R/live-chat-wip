@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { CheckIcon, CrossIcon, PlusIcon, XIcon } from "lucide-react";
 import {
+  DialogTitle,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -14,6 +15,8 @@ import { Input } from "./ui/input";
 import useDebounced from "use-debounced";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { ScrollArea } from "./ui/scroll-area";
+import { useRouter } from "next/navigation";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type User = { name?: string; email: string; username: string; id: number };
 
@@ -70,6 +73,9 @@ export function FriendsDialog() {
           className="flex flex-col h-full overflow-hidden"
         >
           <DialogHeader className="pb-4">
+            <VisuallyHidden>
+              <DialogTitle>Friends</DialogTitle>
+            </VisuallyHidden>
             <TabsList className="w-fit">
               <TabsTrigger value="friends">Friends</TabsTrigger>
               <TabsTrigger value="pending-requests">Requests</TabsTrigger>
@@ -78,8 +84,9 @@ export function FriendsDialog() {
           </DialogHeader>
           {Object.entries(tabs).map(([value, Content]) => (
             <TabsContent
+              forceMount
               value={value}
-              className="grow flex-col overflow-hidden p-1 data-[state=active]:flex"
+              className="hidden grow flex-col overflow-hidden p-1 data-[state=active]:flex"
               key={value}
             >
               <Content />
@@ -91,6 +98,7 @@ export function FriendsDialog() {
   );
 }
 function FriendList() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 200);
   const { data: users, refetch } = useQuery<User[]>({
@@ -100,12 +108,20 @@ function FriendList() {
       });
       return res.data;
     },
+    queryKey: ["friendList", search],
   });
 
   useEffect(() => {
     refetch();
   }, [debouncedSearch, refetch]);
   // TODO: Add loading state
+
+  async function createChat(userId: number) {
+    // TODO: Make prisma shared dep (so we can import types here)
+    const res = await axios.post("/api/chats", { userId });
+    const chat = res.data;
+    router.push(`/chats/${chat.id}`);
+  }
   return (
     <>
       <Input
@@ -118,13 +134,15 @@ function FriendList() {
         <div className="space-y-2 p-1 pr-4">
           {users && users.length > 0 ? (
             users.map((user) => (
-              <Entry>
+              <Entry key={user.id}>
                 <UserComponent
                   avatar=""
                   name={user.name || "Undefined"}
                   username={user.username}
                 />
-                <Button>Message</Button>
+                <Button className="ml-auto" onClick={() => createChat(user.id)}>
+                  Message
+                </Button>
               </Entry>
             ))
           ) : (
@@ -153,11 +171,23 @@ function PendingRequests() {
       });
       return res.data;
     },
+    queryKey: "friendRequests",
   });
 
   useEffect(() => {
     refetch();
   }, [debouncedSearch, refetch]);
+
+  async function acceptFriendRequest(requestId: number) {
+    await axios.post(`/api/friends/requests/${requestId}/accept`);
+    refetch();
+  }
+
+  async function rejectFriendRequest(requestId: number) {
+    await axios.post(`/api/friends/requests/${requestId}/reject`);
+    refetch();
+  }
+
   return (
     <>
       <Input
@@ -170,24 +200,32 @@ function PendingRequests() {
         <div className="space-y-2 p-1 pr-4">
           {requests && requests.length > 0 ? (
             requests.map((request) => {
-              const me = request.isSender ? request.sender : request.receiver;
               const other = request.isSender
                 ? request.receiver
                 : request.sender;
               return (
-                <Entry>
+                <Entry key={request.id}>
                   <UserComponent
                     avatar=""
                     name={other.name || "Undefined"}
                     username={other.username}
                   />
                   <div className="flex gap-1 ml-auto">
+                    {/* TODO: Separate button components for better state management */}
                     {!request.isSender && (
-                      <Button size={"icon"} variant="outline">
+                      <Button
+                        size={"icon"}
+                        variant="outline"
+                        onClick={() => acceptFriendRequest(request.id)}
+                      >
                         <CheckIcon />
                       </Button>
                     )}
-                    <Button size={"icon"} variant="outline">
+                    <Button
+                      size={"icon"}
+                      variant="outline"
+                      onClick={() => rejectFriendRequest(request.id)}
+                    >
                       <XIcon />
                     </Button>
                   </div>
@@ -242,6 +280,7 @@ function AddFriend() {
       return res.data;
     },
     enabled: search.length > 0,
+    queryKey: ["searchUsers", search],
   });
 
   useEffect(() => {
@@ -260,7 +299,7 @@ function AddFriend() {
         <div className="space-y-2 p-1 pr-4">
           {users && users.length > 0 ? (
             users.map((user) => (
-              <Entry>
+              <Entry key={user.id}>
                 <UserComponent
                   avatar=""
                   name={user.name || "Undefined"}
