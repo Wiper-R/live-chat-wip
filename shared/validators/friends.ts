@@ -17,3 +17,7 @@ export const RemoveFriend = z.object({
 export const SearchFriends = z.object({
   q: z.string().optional(),
 });
+
+export const SearchPendingRequests = z.object({
+  q: z.string().optional(),
+});

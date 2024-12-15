@@ -3,10 +3,13 @@ import {
   AcceptFriendRequest,
   RemoveFriend,
   SearchFriends,
+  SearchPendingRequests,
   SendFriendRequest,
 } from "@live-chat/shared/validators/friends";
 import prisma from "../prisma";
 import { getUser } from "./users";
+
+// TODO: Implement pages data, infinite scroll
 
 const router = Router({});
 
@@ -37,6 +40,36 @@ router.post("/requests", async (req, res) => {
     },
   });
   res.json({ message: `Sent friend request to ${data.username}` });
+});
+
+router.get("/requests", async (req, res) => {
+  const query = await SearchPendingRequests.parseAsync(req.query);
+  const user = await getUser(req.auth?.payload.sub);
+  // TODO: Run custom query prisma?
+  const data = await prisma.friendRequest.findMany({
+    where: {
+      AND: [
+        { OR: [{ senderId: user.id }, { receiverId: user.id }] },
+        {
+          OR: [
+            {
+              sender: { username: { contains: query.q, mode: "insensitive" } },
+            },
+            {
+              receiver: {
+                username: { contains: query.q, mode: "insensitive" },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    include: { receiver: true, sender: true },
+  });
+  const requests = data.map((req) => {
+    return { ...req, isSender: user.id == req.senderId };
+  });
+  res.json(requests);
 });
 
 router.post("/requests/:requestId/reject", async (req, res) => {
