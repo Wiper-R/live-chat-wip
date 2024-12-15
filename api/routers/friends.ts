@@ -82,7 +82,12 @@ router.post("/requests/:requestId/reject", async (req, res) => {
     return;
   }
   const user = await getUser(req.auth?.payload.sub!);
-  if (!user || friendRequest.receiverId != user.id) {
+  if (!user) {
+    res.status(401).json({});
+    return;
+  }
+
+  if (![friendRequest.senderId, friendRequest.receiverId].includes(user.id)) {
     res.status(401).json({});
     return;
   }
