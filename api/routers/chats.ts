@@ -3,6 +3,7 @@ import {
   CreateChat,
   CreateMessageData,
   CreateMessageParams,
+  GetMessageParams,
 } from "@live-chat/shared/validators/chats";
 import { getUser } from "./users";
 
@@ -48,6 +49,33 @@ router.post("/:id/messages", async (req, res) => {
   });
 
   res.status(201).json(message);
+});
+
+router.get("/", async (req, res) => {
+  const user = await getUser(req.auth.payload.sub);
+  const chats = await prisma.chat.findMany({
+    where: { Users: { some: { id: user.id } } },
+    include: { Users: { where: { id: { not: user.id } } } },
+  });
+
+  res.json(chats);
+});
+
+router.get("/:id/messages", async (req, res) => {
+  const params = await GetMessageParams.parseAsync(req.params);
+  const user = await getUser(req.auth.payload.sub);
+  const chat = await prisma.chat.findFirst({
+    where: { id: params.id, Users: { some: { id: user.id } } },
+  });
+  if (!chat) {
+    res.status(404).json({});
+    return;
+  }
+  const messages = await prisma.message.findMany({
+    where: { chatId: chat.id },
+  });
+
+  res.json(messages);
 });
 
 export default router;

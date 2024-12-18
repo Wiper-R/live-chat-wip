@@ -22,8 +22,9 @@ model User {
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
   Account          Account[]
   Friendship       Friendship[]
-  Chat             Chat[]
+  Chats            Chat[]
   createdAt        DateTime        @default(now())
+  Messages         Message[]
 }
 
 model Account {
@@ -61,5 +62,7 @@ model Message {
   content   String
   createdAt DateTime @default(now())
   chatId    Int
+  Sender    User     @relation(fields: [senderId], references: [id])
   Chat      Chat     @relation(fields: [chatId], references: [id])
+  senderId  Int
 }

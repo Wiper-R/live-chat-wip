@@ -1,5 +1,8 @@
+"use client";
 import { Input } from "@/components/ui/input";
-import { FriendsDialog } from "./add-friend-dialog";
+import { FriendsDialog } from "./friends-dialog";
+import { useChatsContext } from "@/contexts/app/chats-context";
+import Link from "next/link";
 
 function SideToolbox() {
   return (
@@ -19,13 +22,18 @@ function ChatSearch() {
 }
 
 function ChatList() {
+  const { chats } = useChatsContext();
   return (
     <div className="flex flex-col overflow-scroll w-full py-2">
-      {new Array(20).fill(1).map((v, idx) => (
-        <div className="px-5 py-2 space-x-3 flex items-center">
+      {chats.map((chat) => (
+        <Link
+          className="px-5 py-2 space-x-3 flex items-center"
+          key={chat.id}
+          href={`/app/chats/${chat.id}`}
+        >
           <div className="w-10 h-10 rounded-full bg-gray-600" />
-          <span>Shivang Rathore</span>
-        </div>
+          <span>{chat.Users[0].name || chat.Users[0].username}</span>
+        </Link>
       ))}
     </div>
   );

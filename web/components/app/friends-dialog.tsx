@@ -10,13 +10,20 @@ import {
 } from "@/components/ui/dialog";
 import { useMutation, useQuery } from "react-query";
 import axios from "axios";
-import { PropsWithChildren, useEffect, useState } from "react";
-import { Input } from "./ui/input";
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { Input } from "@/components/ui/input";
 import useDebounced from "use-debounced";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { ScrollArea } from "./ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Loader } from "../loader";
 
 type User = { name?: string; email: string; username: string; id: number };
 
@@ -54,54 +61,69 @@ function Entry({ children }: PropsWithChildren) {
   );
 }
 
+type FriendDialogContext = {
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const FriendsDialogContext = createContext<FriendDialogContext | undefined>(
+  undefined
+);
+
 export function FriendsDialog() {
   const tabs = {
     "add-friend": AddFriend,
     "pending-requests": PendingRequests,
     friends: FriendList,
   };
+  const [open, setOpen] = useState(false);
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant={"outline"}>
-          <PlusIcon />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="h-[400px] overflow-hidden">
-        <Tabs
-          defaultValue="friends"
-          className="flex flex-col h-full overflow-hidden"
-        >
-          <DialogHeader className="pb-4">
-            <VisuallyHidden>
-              <DialogTitle>Friends</DialogTitle>
-            </VisuallyHidden>
-            <TabsList className="w-fit">
-              <TabsTrigger value="friends">Friends</TabsTrigger>
-              <TabsTrigger value="pending-requests">Requests</TabsTrigger>
-              <TabsTrigger value="add-friend">Add Friend</TabsTrigger>
-            </TabsList>
-          </DialogHeader>
-          {Object.entries(tabs).map(([value, Content]) => (
-            <TabsContent
-              forceMount
-              value={value}
-              className="hidden grow flex-col overflow-hidden p-1 data-[state=active]:flex"
-              key={value}
-            >
-              <Content />
-            </TabsContent>
-          ))}
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+    <FriendsDialogContext.Provider value={{ setOpen }}>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant={"outline"} onClick={() => setOpen(true)}>
+            <PlusIcon />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="h-[400px] overflow-hidden">
+          <Tabs
+            defaultValue="friends"
+            className="flex flex-col h-full overflow-hidden"
+          >
+            <DialogHeader className="pb-4">
+              <VisuallyHidden>
+                <DialogTitle>Friends</DialogTitle>
+              </VisuallyHidden>
+              <TabsList className="w-fit">
+                <TabsTrigger value="friends">Friends</TabsTrigger>
+                <TabsTrigger value="pending-requests">Requests</TabsTrigger>
+                <TabsTrigger value="add-friend">Add Friend</TabsTrigger>
+              </TabsList>
+            </DialogHeader>
+            {Object.entries(tabs).map(([value, Content]) => (
+              <TabsContent
+                forceMount
+                value={value}
+                className="hidden grow flex-col overflow-hidden p-1 data-[state=active]:flex"
+                key={value}
+              >
+                <Content />
+              </TabsContent>
+            ))}
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </FriendsDialogContext.Provider>
   );
 }
 function FriendList() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 200);
-  const { data: users, refetch } = useQuery<User[]>({
+  const {
+    data: users,
+    refetch,
+    isLoading,
+  } = useQuery<User[]>({
     queryFn: async () => {
       const res = await axios.get("/api/friends", {
         params: { q: search },
@@ -110,6 +132,8 @@ function FriendList() {
     },
     queryKey: ["friendList", search],
   });
+
+  const context = useContext(FriendsDialogContext)!;
 
   useEffect(() => {
     refetch();
@@ -120,7 +144,8 @@ function FriendList() {
     // TODO: Make prisma shared dep (so we can import types here)
     const res = await axios.post("/api/chats", { userId });
     const chat = res.data;
-    router.push(`/chats/${chat.id}`);
+    context.setOpen(false);
+    router.push(`/app/chats/${chat.id}`);
   }
   return (
     <>
@@ -132,7 +157,9 @@ function FriendList() {
       />
       <ScrollArea>
         <div className="space-y-2 p-1 pr-4">
-          {users && users.length > 0 ? (
+          {isLoading ? (
+            <Loader />
+          ) : users && users.length > 0 ? (
             users.map((user) => (
               <Entry key={user.id}>
                 <UserComponent
@@ -164,7 +191,11 @@ type FriendRequest = {
 function PendingRequests() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 200);
-  const { data: requests, refetch } = useQuery<FriendRequest[]>({
+  const {
+    data: requests,
+    refetch,
+    isLoading,
+  } = useQuery<FriendRequest[]>({
     queryFn: async () => {
       const res = await axios.get("/api/friends/requests", {
         params: { q: search },
@@ -197,49 +228,49 @@ function PendingRequests() {
         className="mb-4"
       />
       <ScrollArea>
-        <div className="space-y-2 p-1 pr-4">
-          {requests && requests.length > 0 ? (
-            requests.map((request) => {
-              const other = request.isSender
-                ? request.receiver
-                : request.sender;
-              return (
-                <Entry key={request.id}>
-                  <UserComponent
-                    avatar=""
-                    name={other.name || "Undefined"}
-                    username={other.username}
-                  />
-                  <div className="flex gap-1 ml-auto">
-                    {/* TODO: Separate button components for better state management */}
-                    {!request.isSender && (
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <div className="space-y-2 p-1 pr-4">
+            {requests && requests.length > 0 ? (
+              requests.map((request) => {
+                const other = request.isSender
+                  ? request.receiver
+                  : request.sender;
+                return (
+                  <Entry key={request.id}>
+                    <UserComponent
+                      avatar=""
+                      name={other.name || "Undefined"}
+                      username={other.username}
+                    />
+                    <div className="flex gap-1 ml-auto">
+                      {/* TODO: Separate button components for better state management */}
+                      {!request.isSender && (
+                        <Button
+                          size={"icon"}
+                          variant="outline"
+                          onClick={() => acceptFriendRequest(request.id)}
+                        >
+                          <CheckIcon />
+                        </Button>
+                      )}
                       <Button
                         size={"icon"}
                         variant="outline"
-                        onClick={() => acceptFriendRequest(request.id)}
+                        onClick={() => rejectFriendRequest(request.id)}
                       >
-                        <CheckIcon />
+                        <XIcon />
                       </Button>
-                    )}
-                    <Button
-                      size={"icon"}
-                      variant="outline"
-                      onClick={() => rejectFriendRequest(request.id)}
-                    >
-                      <XIcon />
-                    </Button>
-                  </div>
-                </Entry>
-              );
-            })
-          ) : search.length > 0 ? (
-            <div className="text-center text-gray-500">No Results</div>
-          ) : (
-            <div className="text-center text-gray-500">
-              Search for pending friend requests
-            </div>
-          )}
-        </div>
+                    </div>
+                  </Entry>
+                );
+              })
+            ) : (
+              <div className="text-center text-gray-500">No Results</div>
+            )}
+          </div>
+        )}
       </ScrollArea>
     </>
   );

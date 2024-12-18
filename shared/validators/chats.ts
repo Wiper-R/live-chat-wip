@@ -10,3 +10,7 @@ export const CreateMessageData = z.object({
 export const CreateChat = z.object({
   userId: z.number(),
 });
+
+export const GetMessageParams = z.object({
+  id: z.number(),
+});
