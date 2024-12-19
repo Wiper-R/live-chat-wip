@@ -5,6 +5,7 @@ import { mountRouters } from "./routers";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
+import axios from "axios";
 const app = express();
 const server = http.createServer(app);
 
@@ -17,6 +18,10 @@ const io = new Server(server, {
   addTrailingSlash: false,
 });
 io.on("connection", async (socket) => {
+  const res = await axios.get("http://localhost:5000/api/users", {
+    headers: { Authorization: socket.handshake.headers.authorization },
+  });
+  console.log(res.data);
   socket.emit("hello", { message: "Data from socket" });
   let counter = 0;
   setInterval(() => {
