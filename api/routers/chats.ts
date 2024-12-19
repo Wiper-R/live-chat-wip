@@ -45,7 +45,9 @@ router.post("/:id/messages", async (req, res) => {
 
   const message = await prisma.chat.update({
     where: { id: chat.id },
-    data: { Messages: { create: { content: data.content } } },
+    data: {
+      Messages: { create: { content: data.content, senderId: user.id } },
+    },
   });
 
   res.status(201).json(message);
@@ -71,8 +73,12 @@ router.get("/:id/messages", async (req, res) => {
     res.status(404).json({});
     return;
   }
-  const messages = await prisma.message.findMany({
+  const data = await prisma.message.findMany({
     where: { chatId: chat.id },
+  });
+
+  const messages = data.map((msg) => {
+    return { ...msg, isSender: user.id == msg.senderId };
   });
 
   res.json(messages);

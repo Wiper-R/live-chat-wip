@@ -1,16 +1,31 @@
 "use client";
 import { useMessagesContext } from "@/contexts/app/messages-context";
 import { cn } from "@/lib/utils";
+import moment from "moment";
 
-function Chat({ isSender = false }: { isSender?: boolean }) {
+function Message({
+  isSender = false,
+  content,
+  createdAt,
+}: {
+  isSender?: boolean;
+  content: string;
+  createdAt: string;
+}) {
   return (
-    <div className={cn("max-w-[400px]", isSender && "ml-auto")}>
-      Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sed doloribus
-      corrupti nobis voluptas tempora libero, illum quae deserunt animi
-      perferendis exercitationem sit aperiam nihil dignissimos ab facilis
-      praesentium error natus molestiae est veritatis non voluptatem sint.
-      Dolorem reprehenderit consectetur laudantium facilis ipsam? Quod, fuga!
-      Quidem nisi dolor exercitationem cumque at.
+    <div
+      className={cn(
+        "max-w-[400px] p-2 border-border border rounded relative",
+        isSender && "ml-auto"
+      )}
+    >
+      <p className="text-sm">
+        {content}
+
+        <span className="text-xs text-gray-200 dark:text-gray-600 float-end mt-2 ml-2 select-none">
+          {moment(createdAt).format("hh:mm")}
+        </span>
+      </p>
     </div>
   );
 }
@@ -18,10 +33,14 @@ function Chat({ isSender = false }: { isSender?: boolean }) {
 export function Chats() {
   const { messages } = useMessagesContext();
   return (
-    <div className="flex flex-col overflow-auto flex-grow w-full p-8">
+    <div className="flex flex-col overflow-auto flex-grow w-full p-8 gap-2">
       {messages.map((message) => (
         <div key={message.id} className="w-full flex">
-          <Chat isSender={message.Sender} />
+          <Message
+            isSender={message.isSender}
+            content={message.content}
+            createdAt={message.createdAt}
+          />
         </div>
       ))}
     </div>

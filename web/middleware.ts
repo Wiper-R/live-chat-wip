@@ -1,4 +1,5 @@
 import {
+  getAccessToken,
   getSession,
   withMiddlewareAuthRequired,
 } from "@auth0/nextjs-auth0/edge";
@@ -10,11 +11,11 @@ export default withMiddlewareAuthRequired(async function middleware(req) {
     return NextResponse.next();
   }
 
-  const session = await getSession();
+  const token = await getAccessToken();
   const headers = new Headers(req.headers);
 
-  if (session) {
-    headers.append("Authorization", `Bearer ${session.accessToken}`);
+  if (token) {
+    headers.append("Authorization", `Bearer ${token.accessToken}`);
   } else {
   }
 

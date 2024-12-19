@@ -1,3 +1,4 @@
+"use client";
 import { createCustomContext } from "@/lib/utils";
 import axios from "axios";
 import { PropsWithChildren } from "react";
@@ -6,6 +7,7 @@ import { useQuery } from "react-query";
 type MessagesContext = {
   messages: any[];
   loadMoreMessages: () => void;
+  chatId: number;
 };
 
 const [Context, useMessagesContext] = createCustomContext<MessagesContext>();
@@ -24,7 +26,9 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
   });
   function loadMoreMessages() {}
   return (
-    <Context.Provider value={{ messages: data || [], loadMoreMessages }}>
+    <Context.Provider
+      value={{ messages: data || [], loadMoreMessages, chatId }}
+    >
       {children}
     </Context.Provider>
   );
