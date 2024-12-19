@@ -4,6 +4,8 @@
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
+  reactStrictMode: true,
+
   /* config options here */
   async rewrites() {
     return {
@@ -15,8 +17,8 @@ const nextConfig = {
           destination: "http://localhost:5000/api/:path*",
         },
         {
-          source: "/socket.io",
-          destination: "http://localhost:5000/socket.io/",
+          source: "/socket/:path*",
+          destination: "http://localhost:5000/socket/:path*",
         },
       ],
     };
