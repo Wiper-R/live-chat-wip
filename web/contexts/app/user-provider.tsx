@@ -1,6 +1,7 @@
 "use client";
 import { createCustomContext } from "@/lib/utils";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
 import { PropsWithChildren, useEffect, useState } from "react";
 
 type User = {
@@ -18,11 +19,18 @@ const [Context, useUser] = createCustomContext<{
 export function UserProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User>();
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
   useEffect(() => {
     async function getUser() {
       try {
         const res = await axios.get("/api/users/");
         setUser(res.data);
+      } catch (e) {
+        if (e instanceof AxiosError) {
+          if (e.status == 401) {
+            router.push("/final-steps");
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -33,7 +41,5 @@ export function UserProvider({ children }: PropsWithChildren) {
     <Context.Provider value={{ user, isLoading }}>{children}</Context.Provider>
   );
 }
-
-function InternalProvider({ children }: PropsWithChildren) {}
 
 export { useUser };

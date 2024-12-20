@@ -8,9 +8,11 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Loader } from "@/components/loader";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 function FinalStepsForm() {
   const { user, isLoading } = useUser();
+  const router = useRouter();
   const form = useForm({
     values: useMemo(() => {
       return { name: user?.name || "", username: user?.username || "" };
@@ -20,6 +22,7 @@ function FinalStepsForm() {
   // TODO: Fix this data type
   async function handleValidSubmit(data: any) {
     await axios.post("/api/users/finalize", data);
+    router.push("/app");
   }
   return (
     <Form {...form}>

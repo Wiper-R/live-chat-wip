@@ -1,12 +1,29 @@
+"use client";
 import { Sidebar } from "@/components/app/sidebar";
+import { Loader } from "@/components/loader";
 import { ChatsProvider } from "@/contexts/app/chats-provider";
 import { SocketProvider } from "@/contexts/app/socket-provider";
-import { UserProvider } from "@/contexts/app/user-provider";
+import { UserProvider, useUser } from "@/contexts/app/user-provider";
 import { PropsWithChildren } from "react";
 
 export default function AppLayout({ children }: PropsWithChildren) {
   return (
     <UserProvider>
+      <LayoutInternal>{children}</LayoutInternal>
+    </UserProvider>
+  );
+}
+
+function LayoutInternal({ children }: PropsWithChildren) {
+  const { user, isLoading } = useUser();
+  if (isLoading || !user)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader />
+      </div>
+    );
+  else {
+    return (
       <SocketProvider>
         <ChatsProvider>
           <div className="flex h-screen">
@@ -15,6 +32,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
           </div>
         </ChatsProvider>
       </SocketProvider>
-    </UserProvider>
-  );
+    );
+  }
 }

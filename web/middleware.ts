@@ -1,29 +1,26 @@
 import {
-  getAccessToken,
-  getSession,
   withMiddlewareAuthRequired,
+  getSession,
 } from "@auth0/nextjs-auth0/edge";
 
 import { NextResponse } from "next/server";
 
-export default withMiddlewareAuthRequired(async function middleware(req) {
-  if (req.nextUrl.pathname.startsWith("/api/auth/")) {
-    return NextResponse.next();
-  }
+export default withMiddlewareAuthRequired({
+  async middleware(req) {
+    if (req.nextUrl.pathname.startsWith("/api/auth/")) {
+      return NextResponse.next();
+    }
 
-  const token = await getAccessToken();
-  const headers = new Headers(req.headers);
+    const res = NextResponse.next();
 
-  if (token) {
-    headers.append("Authorization", `Bearer ${token.accessToken}`);
-  } else {
-  }
+    const token = await getSession(req, res);
 
-  return NextResponse.next({
-    request: {
-      headers,
-    },
-  });
+    if (token) {
+      res.headers.append("Authorization", `Bearer ${token.accessToken}`);
+    }
+    return res;
+  },
+  returnTo: "/app",
 });
 
 export const config = {

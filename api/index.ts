@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import express, { NextFunction, Router, Request, Response } from "express";
 import { auth } from "express-oauth2-jwt-bearer";
 import "dotenv/config";
 import { mountRouters } from "./routers";
@@ -6,6 +6,7 @@ import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
 import axios from "axios";
+import { getUser } from "./routers/users";
 const app = express();
 const server = http.createServer(app);
 
@@ -21,7 +22,6 @@ io.on("connection", async (socket) => {
   const res = await axios.get("http://localhost:5000/api/users", {
     headers: { Authorization: socket.handshake.headers.authorization },
   });
-  console.log(res.data);
   socket.emit("hello", { message: "Data from socket" });
   let counter = 0;
   setInterval(() => {
@@ -37,15 +37,26 @@ io.on("connection", async (socket) => {
 app.use(express.json());
 app.use(cors({ origin: ["http://localhost:3000"] }));
 
+async function middleware(req: Request, res: Response, next: NextFunction) {
+  if (req.path == "/users/finalize") {
+    next();
+    return;
+  }
+
+  const user = await getUser(req.auth.payload.sub);
+  if (!user) {
+    res.status(401).json({});
+    return;
+  }
+  next();
+}
+
 const api = Router();
-app.use("/api", api);
 api.use(auth());
+api.use(middleware);
+app.use("/api", api);
 
 mountRouters(api);
-
-api.get("/authorized", async (req, res) => {
-  res.send("Secured Resource");
-});
 
 const port = process.env.PORT || 8080;
 
