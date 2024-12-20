@@ -10,3 +10,8 @@ export type CreateUserRequest = z.infer<typeof CreateUserRequest>;
 export const SearchUsers = z.object({
   q: z.string(),
 });
+
+export const FinalizeSignUp = z.object({
+  username: z.string(),
+  name: z.string(),
+});

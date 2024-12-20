@@ -1,17 +1,20 @@
 "use client";
-import { useMessagesContext } from "@/contexts/app/messages-context";
+import { useMessagesContext } from "@/contexts/app/messages-provider";
+import { useUser } from "@/contexts/app/user-provider";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 
 function Message({
-  isSender = false,
   content,
   createdAt,
+  senderId,
 }: {
-  isSender?: boolean;
+  senderId: number;
   content: string;
   createdAt: string;
 }) {
+  const { user } = useUser();
+  const isSender = user?.id == senderId;
   return (
     <div
       className={cn(
@@ -37,9 +40,9 @@ export function Chats() {
       {messages.map((message) => (
         <div key={message.id} className="w-full flex">
           <Message
-            isSender={message.isSender}
             content={message.content}
             createdAt={message.createdAt}
+            senderId={message.senderId}
           />
         </div>
       ))}

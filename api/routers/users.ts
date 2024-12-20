@@ -3,6 +3,7 @@ import prisma from "../prisma";
 import auth0Axios from "../lib/auth0-axios";
 import {
   CreateUserRequest,
+  FinalizeSignUp,
   SearchUsers,
 } from "@live-chat/shared/validators/users";
 
@@ -90,6 +91,10 @@ router.get("/search", async (req, res) => {
     },
   });
   res.json(users);
+});
+
+router.post("/finalize", async (req, res) => {
+  const data = await FinalizeSignUp.parseAsync(req.body);
 });
 
 export default router;

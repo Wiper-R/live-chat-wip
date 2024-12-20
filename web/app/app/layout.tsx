@@ -1,8 +1,8 @@
 import { Sidebar } from "@/components/app/sidebar";
-import { ChatsProvider } from "@/contexts/app/chats-context";
+import { ChatsProvider } from "@/contexts/app/chats-provider";
 import { SocketProvider } from "@/contexts/app/socket-provider";
+import { UserProvider } from "@/contexts/app/user-provider";
 import { PropsWithChildren } from "react";
-import { UserProvider } from "@auth0/nextjs-auth0/client";
 
 export default function AppLayout({ children }: PropsWithChildren) {
   return (

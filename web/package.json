@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^3.5.0",
+    "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-dialog": "^1.1.3",
+    "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
@@ -25,11 +27,13 @@
     "next": "14.2.20",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-hook-form": "^7.54.1",
     "react-query": "^3.39.3",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "use-debounced": "^1.2.0"
+    "use-debounced": "^1.2.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

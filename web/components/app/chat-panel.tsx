@@ -5,7 +5,7 @@ import { ChatUser } from "./chat-user";
 import { Chats } from "./chats";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "axios";
-import { useMessagesContext } from "@/contexts/app/messages-context";
+import { useMessagesContext } from "@/contexts/app/messages-provider";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");

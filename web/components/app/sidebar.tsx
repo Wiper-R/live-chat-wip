@@ -1,7 +1,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { FriendsDialog } from "./friends-dialog";
-import { useChatsContext } from "@/contexts/app/chats-context";
+import { useChatsContext } from "@/contexts/app/chats-provider";
 import Link from "next/link";
 
 function SideToolbox() {
