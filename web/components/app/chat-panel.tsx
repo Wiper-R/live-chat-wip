@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import { Input } from "../ui/input";
-import { ChatUser } from "./chat-user";
 import { Chats } from "./chats";
 import axios from "axios";
 import { useMessagesContext } from "@/contexts/app/messages-provider";
+import { ChatPanelTopBar } from "./chat-panel-topbar";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
@@ -20,7 +20,6 @@ function ChatInput() {
       className="p-4"
       onSubmit={async (e) => {
         e.preventDefault();
-        e.stopPropagation();
         await createMessage();
       }}
     >
@@ -35,8 +34,8 @@ function ChatInput() {
 
 export function ChatPanel() {
   return (
-    <div className="flex flex-col overflow-hidden h-full">
-      <ChatUser />
+    <div className="flex flex-col overflow-hidden h-full min-w-[400px]">
+      <ChatPanelTopBar />
       <Chats />
       <ChatInput />
     </div>

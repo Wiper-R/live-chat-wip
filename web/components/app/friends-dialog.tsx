@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, CrossIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   DialogTitle,
   Dialog,
@@ -24,6 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Loader } from "../loader";
+import * as queryFactory from "@/lib/query-key-factory";
 
 type User = { name?: string; email: string; username: string; id: number };
 
@@ -129,7 +130,7 @@ function FriendList() {
       });
       return res.data;
     },
-    queryKey: ["friendList", search],
+    queryKey: queryFactory.friends.list(search),
   });
 
   const context = useContext(FriendsDialogContext)!;
@@ -201,7 +202,7 @@ function PendingRequests() {
       });
       return res.data;
     },
-    queryKey: "friendRequests",
+    queryKey: queryFactory.friends.requests(search),
   });
 
   useEffect(() => {
@@ -279,7 +280,6 @@ function SendFriendRequestButton({ username }: { username: string }) {
   const {
     mutateAsync: sendFriendRequest,
     isSuccess,
-    isIdle,
     isLoading,
   } = useMutation({
     async mutationFn(username: string) {
@@ -310,7 +310,7 @@ function AddFriend() {
       return res.data;
     },
     enabled: search.length > 0,
-    queryKey: ["searchUsers", search],
+    queryKey: queryFactory.users.search(search),
   });
 
   useEffect(() => {

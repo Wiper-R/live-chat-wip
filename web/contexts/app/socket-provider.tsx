@@ -4,7 +4,8 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 import { useQueryClient } from "react-query";
 import io, { Socket } from "socket.io-client";
 import { useUser } from "./user-provider";
-import { messages } from "@/lib/query-key-factory";
+import { chat } from "@/lib/query-key-factory";
+import { Message } from "@live-chat/shared/prisma";
 
 type SocketContext = {};
 
@@ -17,8 +18,8 @@ export function SocketProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!user) return;
     var socket = io({ path: "/socket", addTrailingSlash: false });
-    socket.on("message", async (message: any) => {
-      await queryClient.setQueryData(messages.chat(message.chatId), (prev) => {
+    socket.on("message:create", async (message: Message) => {
+      await queryClient.setQueryData(chat.messages(message.chatId), (prev) => {
         return [...((prev || []) as any[]), message];
       });
     });

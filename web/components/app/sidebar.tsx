@@ -46,7 +46,7 @@ function ChatList() {
 
 export function Sidebar() {
   return (
-    <aside className="max-w-sm bg-background h-screen w-full border-r flex flex-col overflow-hidden">
+    <aside className="max-w-sm bg-background h-screen w-full border-r flex flex-col overflow-hidden min-w-[300px]">
       <ChatSearch />
       <ChatList />
       <SideToolbox />

@@ -51,7 +51,7 @@ router.post("/:id/messages", async (req, res) => {
 
   for (const { id } of chat.Users) {
     if (id in connections) {
-      connections[id].emit("message", message);
+      connections[id].emit("message:create", message);
     }
   }
 
@@ -80,6 +80,7 @@ router.get("/:id/messages", async (req, res) => {
   }
   const data = await prisma.message.findMany({
     where: { chatId: chat.id },
+    orderBy: { createdAt: "asc" },
   });
 
   const messages = data.map((msg) => {
