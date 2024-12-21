@@ -4,6 +4,7 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 import { useQueryClient } from "react-query";
 import io, { Socket } from "socket.io-client";
 import { useUser } from "./user-provider";
+import { messages } from "@/lib/query-key-factory";
 
 type SocketContext = {};
 
@@ -16,19 +17,10 @@ export function SocketProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!user) return;
     var socket = io({ path: "/socket", addTrailingSlash: false });
-    socket.on("hello", (data) => {
-      console.log(data);
-    });
-    socket.on("message", (data: any) => {
-      queryClient.setQueryData(
-        ["messages", data.message.chatId],
-        (prev?: any[]) => {
-          if (prev) {
-            return [...prev, data.message];
-          }
-          return [data.message];
-        }
-      );
+    socket.on("message", async (message: any) => {
+      await queryClient.setQueryData(messages.chat(message.chatId), (prev) => {
+        return [...((prev || []) as any[]), message];
+      });
     });
     socketRef.current = socket;
     return () => {

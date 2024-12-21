@@ -26,7 +26,7 @@ function Message({
         {content}
 
         <span className="text-xs text-gray-200 dark:text-gray-600 float-end mt-2 ml-2 select-none">
-          {moment(createdAt).format("hh:mm")}
+          {moment(createdAt).format("hh:mm a")}
         </span>
       </p>
     </div>

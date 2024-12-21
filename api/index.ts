@@ -4,11 +4,13 @@ import "dotenv/config";
 import { mountRouters } from "./routers";
 import cors from "cors";
 import http from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import axios from "axios";
 import { getUser } from "./routers/users";
 const app = express();
 const server = http.createServer(app);
+
+const connections: Record<number, Socket> = {};
 
 // Socket.io setup
 const io = new Server(server, {
@@ -19,18 +21,20 @@ const io = new Server(server, {
   addTrailingSlash: false,
 });
 io.on("connection", async (socket) => {
-  const res = await axios.get("http://localhost:5000/api/users", {
-    headers: { Authorization: socket.handshake.headers.authorization },
-  });
-  socket.emit("hello", { message: "Data from socket" });
-  let counter = 0;
-  setInterval(() => {
-    counter++;
-    socket.emit("hello", { message: `My new message ${counter}` });
-  }, 1000);
+  try {
+    const res = await axios.get("http://localhost:5000/api/users", {
+      headers: { Authorization: socket.handshake.headers.authorization },
+    });
+    var user = res.data;
+  } catch (e) {
+    socket.disconnect(true);
+    return;
+  }
   console.log(`A client connected ${socket.id}`);
+  connections[user.id] = socket;
   socket.on("disconnect", () => {
     console.log(`A client disconnected ${socket.id}`);
+    delete connections[user.id];
   });
 });
 
@@ -63,3 +67,5 @@ const port = process.env.PORT || 8080;
 server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
+
+export { connections };

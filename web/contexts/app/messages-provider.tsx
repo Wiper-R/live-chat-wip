@@ -3,6 +3,7 @@ import { createCustomContext } from "@/lib/utils";
 import axios from "axios";
 import { PropsWithChildren } from "react";
 import { useQuery } from "react-query";
+import { messages } from "@/lib/query-key-factory";
 
 type MessagesContext = {
   messages: any[];
@@ -22,7 +23,7 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
       const res = await axios.get(`/api/chats/${chatId}/messages`);
       return res.data;
     },
-    queryKey: ["messages", chatId],
+    queryKey: messages.chat(chatId),
   });
   function loadMoreMessages() {}
   return (

@@ -3,24 +3,16 @@ import { useState } from "react";
 import { Input } from "../ui/input";
 import { ChatUser } from "./chat-user";
 import { Chats } from "./chats";
-import { useMutation, useQueryClient } from "react-query";
 import axios from "axios";
 import { useMessagesContext } from "@/contexts/app/messages-provider";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
-  const client = useQueryClient();
   const { chatId } = useMessagesContext();
-  const { mutate } = useMutation({
-    async mutationFn({ content }: { content: string }) {
-      await axios.post(`/api/chats/${chatId}/messages`, { content });
-      client.invalidateQueries(["messages", chatId]);
-      setContent("");
-    },
-  });
 
   async function createMessage() {
-    mutate({ content });
+    await axios.post(`/api/chats/${chatId}/messages`, { content });
+    setContent("");
   }
 
   return (
@@ -28,6 +20,7 @@ function ChatInput() {
       className="p-4"
       onSubmit={async (e) => {
         e.preventDefault();
+        e.stopPropagation();
         await createMessage();
       }}
     >

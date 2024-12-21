@@ -6,6 +6,7 @@ import {
   GetMessageParams,
 } from "@live-chat/shared/validators/chats";
 import { getUser } from "./users";
+import { connections } from "..";
 
 const router = Router();
 
@@ -37,18 +38,22 @@ router.post("/:id/messages", async (req, res) => {
   const user = await getUser(req.auth.payload.sub);
   const chat = await prisma.chat.findFirst({
     where: { id: params.id, Users: { some: { id: user.id } } },
+    include: { Users: { select: { id: true } } },
   });
   if (!chat) {
     res.status(404).json({});
     return;
   }
 
-  const message = await prisma.chat.update({
-    where: { id: chat.id },
-    data: {
-      Messages: { create: { content: data.content, senderId: user.id } },
-    },
+  const message = await prisma.message.create({
+    data: { content: data.content, senderId: user.id, chatId: chat.id },
   });
+
+  for (const { id } of chat.Users) {
+    if (id in connections) {
+      connections[id].emit("message", message);
+    }
+  }
 
   res.status(201).json(message);
 });

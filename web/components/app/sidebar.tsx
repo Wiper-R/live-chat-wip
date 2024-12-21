@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { FriendsDialog } from "./friends-dialog";
 import { useChatsContext } from "@/contexts/app/chats-provider";
 import Link from "next/link";
+import { useUser } from "@/contexts/app/user-provider";
 
 function SideToolbox() {
   return (
@@ -23,18 +24,22 @@ function ChatSearch() {
 
 function ChatList() {
   const { chats } = useChatsContext();
+  const { user } = useUser();
   return (
     <div className="flex flex-col overflow-scroll w-full py-2">
-      {chats.map((chat) => (
-        <Link
-          className="px-5 py-2 space-x-3 flex items-center"
-          key={chat.id}
-          href={`/app/chats/${chat.id}`}
-        >
-          <div className="w-10 h-10 rounded-full bg-gray-600" />
-          <span>{chat.Users[0].name || chat.Users[0].username}</span>
-        </Link>
-      ))}
+      {chats.map((chat) => {
+        var chatUser = chat.Users.find((u: any) => u.id != user!.id);
+        return (
+          <Link
+            className="px-5 py-2 space-x-3 flex items-center"
+            key={chat.id}
+            href={`/app/chats/${chat.id}`}
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-600" />
+            <span>{chatUser.name}</span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

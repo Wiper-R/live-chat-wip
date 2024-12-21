@@ -101,7 +101,6 @@ export function FriendsDialog() {
             </DialogHeader>
             {Object.entries(tabs).map(([value, Content]) => (
               <TabsContent
-                forceMount
                 value={value}
                 className="hidden grow flex-col overflow-hidden p-1 data-[state=active]:flex"
                 key={value}
