@@ -1,12 +1,14 @@
 import { Router } from "express";
 import {
+  CreateCallParams,
   CreateChat,
   CreateMessageData,
   CreateMessageParams,
+  GetChatByID,
   GetMessageParams,
 } from "@live-chat/shared/validators/chats";
 import { getUser } from "./users";
-import { connections } from "..";
+import { connections, peers } from "..";
 
 const router = Router();
 
@@ -88,6 +90,50 @@ router.get("/:id/messages", async (req, res) => {
   });
 
   res.json(messages);
+});
+
+router.get("/:id", async (req, res) => {
+  const params = await GetChatByID.parseAsync(req.params);
+  const user = await getUser(req.auth.payload.sub);
+  const chat = await prisma.chat.findFirst({
+    where: { id: params.id, Users: { some: { id: user.id } } },
+    include: { Users: true },
+  });
+  if (!chat) {
+    res.status(404).json({});
+    return;
+  }
+
+  res.json({ ...chat });
+});
+
+router.get("/:id/peer", async (req, res) => {
+  const params = await CreateCallParams.parseAsync(req.params);
+  const user = await getUser(req.auth.payload.sub);
+  const chat = await prisma.chat.findFirst({
+    where: {
+      id: params.id,
+      Users: { some: { id: user.id } },
+    },
+    include: { Users: true },
+  });
+
+  if (!chat) {
+    res.status(401).json();
+    return;
+  }
+
+  const otherUser = chat.Users.find((u) => u.id != user.id);
+  if (!(otherUser.id in connections) || !(otherUser.id in peers)) {
+    res.status(400).json({
+      message: "Person is offline",
+    });
+  }
+
+  res.json({
+    peerId: peers[otherUser.id],
+    chat,
+  });
 });
 
 export default router;

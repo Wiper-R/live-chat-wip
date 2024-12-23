@@ -11,6 +11,7 @@ const app = express();
 const server = http.createServer(app);
 
 const connections: Record<number, Socket> = {};
+const peers: Record<number, string> = {};
 
 // Socket.io setup
 const io = new Server(server, {
@@ -32,9 +33,50 @@ io.on("connection", async (socket) => {
   }
   console.log(`A client connected ${socket.id}`);
   connections[user.id] = socket;
+  socket.on("peer:open", (id: string) => {
+    peers[user.id] = id;
+  });
+  socket.on("call:request", async (userId: number) => {
+    console.log("Server got call request");
+    if (!(userId in peers)) {
+      console.log("No peer found");
+      return;
+    }
+    try {
+      var chat = await prisma.chat.findFirstOrThrow({
+        where: {
+          AND: [
+            {
+              Users: {
+                some: {
+                  id: user.id,
+                },
+              },
+            },
+            {
+              Users: {
+                some: {
+                  id: userId,
+                },
+              },
+            },
+          ],
+        },
+        include: { Users: true },
+      });
+    } catch (e) {
+      return;
+    }
+    socket.emit("call:request", {
+      peerId: peers[userId],
+      userId,
+      chat,
+    });
+  });
   socket.on("disconnect", () => {
     console.log(`A client disconnected ${socket.id}`);
     delete connections[user.id];
+    delete peers[user.id];
   });
 });
 
@@ -68,4 +110,4 @@ server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
 
-export { connections };
+export { connections, peers };

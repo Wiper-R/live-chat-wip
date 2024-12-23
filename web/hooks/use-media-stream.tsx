@@ -47,5 +47,5 @@ export function useMediaStream(stream: Nullable<MediaStream> = null) {
     state.getAudioTracks().forEach((track) => (track.enabled = !muted));
   };
 
-  return { toggleAudio, toggleVideo, muted, video, stream: state };
+  return { toggleAudio, toggleVideo, muted, video, stream: state, status };
 }

@@ -14,3 +14,11 @@ export const CreateChat = z.object({
 export const GetMessageParams = z.object({
   id: z.coerce.number(),
 });
+
+export const GetChatByID = z.object({
+  id: z.coerce.number(),
+});
+
+export const CreateCallParams = z.object({
+  id: z.coerce.number(),
+});

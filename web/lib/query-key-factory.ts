@@ -1,5 +1,6 @@
 export const chat = {
   all: ["chat"] as const,
+  byId: (chatId: number) => [...chat.all, chatId] as const,
   messages: (chatId: number) => [...chat.all, "messages", +chatId] as const,
 };
 

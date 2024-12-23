@@ -1,6 +1,7 @@
 "use client";
 import { Sidebar } from "@/components/app/sidebar";
 import { Loader } from "@/components/loader";
+import { CallProvider } from "@/contexts/app/call-provider";
 import { ChatsProvider } from "@/contexts/app/chats-provider";
 import { SocketProvider } from "@/contexts/app/socket-provider";
 import { UserProvider, useUser } from "@/contexts/app/user-provider";
@@ -25,12 +26,14 @@ function LayoutInternal({ children }: PropsWithChildren) {
   else {
     return (
       <SocketProvider>
-        <ChatsProvider>
-          <div className="flex h-screen">
-            <Sidebar />
-            <div className="flex-grow">{children}</div>
-          </div>
-        </ChatsProvider>
+        <CallProvider>
+          <ChatsProvider>
+            <div className="flex h-screen">
+              <Sidebar />
+              <div className="flex-grow">{children}</div>
+            </div>
+          </ChatsProvider>
+        </CallProvider>
       </SocketProvider>
     );
   }

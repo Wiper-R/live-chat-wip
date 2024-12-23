@@ -5,6 +5,9 @@ import { Chats } from "./chats";
 import axios from "axios";
 import { useMessagesContext } from "@/contexts/app/messages-provider";
 import { ChatPanelTopBar } from "./chat-panel-topbar";
+import PeerPage from "@/app/peer/peer";
+import { useCallProvider } from "@/contexts/app/call-provider";
+import { CallingWindow } from "./calling-window";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
@@ -33,11 +36,18 @@ function ChatInput() {
 }
 
 export function ChatPanel() {
+  const { callType } = useCallProvider();
   return (
     <div className="flex flex-col overflow-hidden h-full min-w-[400px]">
       <ChatPanelTopBar />
-      <Chats />
-      <ChatInput />
+      {callType != "idle" ? (
+        <CallingWindow />
+      ) : (
+        <>
+          <Chats />
+          <ChatInput />
+        </>
+      )}
     </div>
   );
 }
