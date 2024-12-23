@@ -7,7 +7,7 @@ import { useMessagesContext } from "@/contexts/app/messages-provider";
 import { ChatPanelTopBar } from "./chat-panel-topbar";
 import PeerPage from "@/app/peer/peer";
 import { useCallProvider } from "@/contexts/app/call-provider";
-import { CallingWindow } from "./calling-window";
+import { CallWindow } from "./call-window";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
@@ -41,7 +41,7 @@ export function ChatPanel() {
     <div className="flex flex-col overflow-hidden h-full min-w-[400px]">
       <ChatPanelTopBar />
       {callType != "idle" ? (
-        <CallingWindow />
+        <CallWindow />
       ) : (
         <>
           <Chats />

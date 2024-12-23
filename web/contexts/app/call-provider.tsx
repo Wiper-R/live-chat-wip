@@ -52,7 +52,6 @@ function CallProvider({ children }: PropsWithChildren) {
       peerId,
       chat,
     });
-    // peer?.call(peerId, stream, { metadata: { chat } });
   }, []);
 
   const call = useCallback(
@@ -63,6 +62,7 @@ function CallProvider({ children }: PropsWithChildren) {
       }
       var _call = peer.call(peerId, stream, { metadata: { chat } });
       _call.on("stream", (stream) => {
+        console.log("Accepted");
         setCallStream(stream);
       });
     },

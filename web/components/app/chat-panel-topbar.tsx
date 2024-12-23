@@ -3,24 +3,11 @@ import { useUser } from "@/contexts/app/user-provider";
 import { Button } from "../ui/button";
 import { VideoIcon } from "lucide-react";
 import { useCallProvider } from "@/contexts/app/call-provider";
-import { useSocket } from "@/contexts/app/socket-provider";
 import { useChatProvider } from "@/contexts/app/chat-provider";
 
 function VideoCallButton() {
-  const { socket } = useSocket();
   const { chat } = useChatProvider();
-  const { user } = useUser();
   const { initiateCall } = useCallProvider();
-  // const chatUser =
-  //   user && chat ? chat.Users.find((u) => u.id != user.id) : undefined;
-  // function call() {
-  //   console.log("chat", chat);
-  //   console.log("socket", socket);
-  //   if (!socket || !chatUser) return;
-  //   console.log("Requesting a call");
-  //   console.log(chatUser);
-  //   socket.emit("call:request", chatUser.id);
-  // }
   return (
     <Button variant="outline" onClick={() => initiateCall(chat!.id)}>
       <VideoIcon />
