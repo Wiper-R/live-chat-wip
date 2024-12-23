@@ -6,8 +6,15 @@ import { Button } from "../ui/button";
 import { User } from "@live-chat/shared/prisma";
 
 export function CallingWindow() {
-  const { callType, incoming, outgoing, peer, setCallStream, callStream } =
-    useCallProvider();
+  const {
+    callType,
+    incoming,
+    outgoing,
+    peer,
+    setCallStream,
+    callStream,
+    call,
+  } = useCallProvider();
   if (callType == "incoming" && !incoming) throw new Error("Invalid call");
   if (callType == "outgoing" && !outgoing) throw new Error("Invalid call");
 
@@ -27,12 +34,7 @@ export function CallingWindow() {
       !isCalling &&
       peer
     ) {
-      peer.call(outgoing.peerId, stream, {
-        metadata: {
-          chat: outgoing.chat,
-          user,
-        },
-      });
+      call(outgoing.peerId, outgoing.chat, stream);
       setIsCalling(true);
     }
   }, [status, stream, isCalling, peer, outgoing, callType]);
@@ -46,13 +48,13 @@ export function CallingWindow() {
 
   if (callStream) {
     console.log("Call stream yay");
-    return <video ref={videoRef} autoPlay />;
+    return (
+      <video ref={videoRef} autoPlay className="w-full h-full object-contain" />
+    );
   }
 
   if (outgoing && callType == "outgoing") {
-    const calledUser = outgoing.chat.Users.find(
-      (u) => u.id == outgoing.userId
-    )!;
+    const calledUser = outgoing.chat.Users.find((u) => u.id != user?.id)!;
 
     return (
       <div className="bg-background h-full flex items-center justify-center">
@@ -66,7 +68,7 @@ export function CallingWindow() {
   }
   if (incoming && callType == "incoming") {
     const meta = incoming.call.metadata;
-    const callingUser = meta.chat.Users.find((u: User) => u.id == meta.user.id);
+    const callingUser = meta.chat.Users.find((u: User) => u.id != user?.id);
     function answerCall() {
       incoming?.call.answer(stream!);
       incoming?.call.on("stream", (stream) => {

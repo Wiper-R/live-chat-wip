@@ -10,7 +10,7 @@ function VideoCallButton() {
   const { socket } = useSocket();
   const { chat } = useChatProvider();
   const { user } = useUser();
-  const { call } = useCallProvider();
+  const { initiateCall } = useCallProvider();
   // const chatUser =
   //   user && chat ? chat.Users.find((u) => u.id != user.id) : undefined;
   // function call() {
@@ -22,7 +22,7 @@ function VideoCallButton() {
   //   socket.emit("call:request", chatUser.id);
   // }
   return (
-    <Button variant="outline" onClick={() => call}>
+    <Button variant="outline" onClick={() => initiateCall(chat!.id)}>
       <VideoIcon />
     </Button>
   );

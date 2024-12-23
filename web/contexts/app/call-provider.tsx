@@ -20,7 +20,8 @@ type CallContext = {
   callType: CallType;
   callStream?: MediaStream;
   setCallStream: React.Dispatch<React.SetStateAction<MediaStream | undefined>>;
-  call: (chatId: number, stream: MediaStream) => void;
+  initiateCall: (chatId: number) => void;
+  call: (peerId: string, chat: ChatWithUsers, stream: MediaStream) => void;
 };
 
 const [Context, useCallProvider] = createCustomContext<CallContext>();
@@ -43,16 +44,27 @@ function CallProvider({ children }: PropsWithChildren) {
   const peerId = useRef<string>();
   const [callStream, setCallStream] = useState<MediaStream>();
 
+  const initiateCall = useCallback(async (chatId: number) => {
+    const res = await axios.get(`/api/chats/${chatId}/peer`);
+    const { peerId, chat } = res.data;
+    setCallType("outgoing");
+    setOutgoing({
+      peerId,
+      chat,
+    });
+    // peer?.call(peerId, stream, { metadata: { chat } });
+  }, []);
+
   const call = useCallback(
-    async (chatId: number) => {
-      const res = await axios.get(`/api/chats/${chatId}/peer`);
-      const { peerId, chat } = res.data;
-      setCallType("outgoing");
-      setOutgoing({
-        peerId,
-        chat,
+    (peerId: string, chat: ChatWithUsers, stream: MediaStream) => {
+      if (!peer) {
+        console.warn("Peer isn't ready yet");
+        return;
+      }
+      var _call = peer.call(peerId, stream, { metadata: { chat } });
+      _call.on("stream", (stream) => {
+        setCallStream(stream);
       });
-      // peer?.call(peerId, stream, { metadata: { chat } });
     },
     [peer]
   );
@@ -143,6 +155,7 @@ function CallProvider({ children }: PropsWithChildren) {
         peer,
         setCallStream,
         callStream,
+        initiateCall,
         call,
       }}
     >
