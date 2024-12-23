@@ -1,0 +1,64 @@
+"use client";
+import { MaxWidthWrapper } from "@/src/components/MaxWidthWrapper";
+import { Form, FormField, FormItem, FormLabel } from "@/src/components/ui/form";
+import { Input } from "@/src/components/ui/input";
+import { Button } from "@/src/components/ui/button";
+import { useUser } from "@/src/contexts/app/user-provider";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { Loader } from "@/src/components/loader";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+
+function FinalStepsForm() {
+  const { user, isLoading } = useUser();
+  const router = useRouter();
+  const form = useForm({
+    values: useMemo(() => {
+      return { name: user?.name || "", username: user?.username || "" };
+    }, [user]),
+  });
+  if (isLoading) return <Loader />;
+  // TODO: Fix this data type
+  async function handleValidSubmit(data: any) {
+    await axios.post("/api/users/finalize", data);
+    router.push("/app");
+  }
+  return (
+    <Form {...form}>
+      <form
+        className="max-w-[600px] mx-auto w-full space-y-4"
+        onSubmit={form.handleSubmit(handleValidSubmit)}
+      >
+        <h3 className="text-2xl font-semibold mb-8">Final Steps</h3>
+        <FormField
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Display Name</FormLabel>
+              <Input {...field} required />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <Input {...field} required />
+            </FormItem>
+          )}
+        />
+        <Button className="w-full">Get Started</Button>
+      </form>
+    </Form>
+  );
+}
+
+export default function FinalSteps() {
+  return (
+    <MaxWidthWrapper className="flex h-screen items-center justify-center">
+      <FinalStepsForm />
+    </MaxWidthWrapper>
+  );
+}
