@@ -1,12 +1,12 @@
 "use client";
-import { MaxWidthWrapper } from "@/src/components/MaxWidthWrapper";
-import { Form, FormField, FormItem, FormLabel } from "@/src/components/ui/form";
-import { Input } from "@/src/components/ui/input";
-import { Button } from "@/src/components/ui/button";
-import { useUser } from "@/src/contexts/app/user-provider";
+import { MaxWidthWrapper } from "@/components/MaxWidthWrapper";
+import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useUser } from "@/contexts/app/user-provider";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Loader } from "@/src/components/loader";
+import { Loader } from "@/components/loader";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 

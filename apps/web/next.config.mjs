@@ -4,24 +4,15 @@
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
-  // reactStrictMode: true,
-  // /* config options here */
-  // async rewrites() {
-  //   return {
-  //     beforeFiles: [],
-  //     afterFiles: [],
-  //     fallback: [
-  //       {
-  //         source: "/api/:path*",
-  //         destination: "http://localhost:5000/api/:path*",
-  //       },
-  //       {
-  //         source: "/socket/:path*",
-  //         destination: "http://localhost:5000/socket/:path*",
-  //       },
-  //     ],
-  //   };
-  // },
+  async rewrites() {
+    return [
+      { source: "/socket.io", destination: "http://localhost:5001/socket.io" },
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:5000/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

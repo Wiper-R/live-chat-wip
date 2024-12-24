@@ -1,15 +1,12 @@
 "use client";
-import { useUser } from "@/src/contexts/app/user-provider";
+import { useUser } from "@/contexts/app/user-provider";
 import { Button } from "../ui/button";
 import { VideoIcon } from "lucide-react";
-import { useCallProvider } from "@/src/contexts/app/call-provider";
-import { useChatProvider } from "@/src/contexts/app/chat-provider";
+import { useChatsContext } from "@/contexts/app/chats-provider";
 
 function VideoCallButton() {
-  const { chat } = useChatProvider();
-  const { initiateCall } = useCallProvider();
   return (
-    <Button variant="outline" onClick={() => initiateCall(chat!.id)}>
+    <Button variant="outline" onClick={() => {}}>
       <VideoIcon />
     </Button>
   );
@@ -18,10 +15,9 @@ function VideoCallButton() {
 export function ChatPanelTopBar() {
   // FIXME: Display active chat user, not current user
   // TODO: Support multiple users (but not for now)
-  const { chat } = useChatProvider();
   const { user } = useUser();
-  const chatUser =
-    user && chat ? chat.Users.find((u) => u.id != user.id) : undefined;
+  const { selectedChat } = useChatsContext();
+  const chatUser = selectedChat?.Recipients.find((u: any) => user?.id != u.id);
   return (
     <div className="p-4 flex gap-2 items-center border-b ">
       <div className="w-10 h-10 rounded-full bg-gray-600" />

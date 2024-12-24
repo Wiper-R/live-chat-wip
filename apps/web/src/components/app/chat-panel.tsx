@@ -2,19 +2,16 @@
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { Chats } from "./chats";
-import axios from "axios";
-import { useMessagesContext } from "@/src/contexts/app/messages-provider";
+import { useMessagesContext } from "@/contexts/app/messages-provider";
 import { ChatPanelTopBar } from "./chat-panel-topbar";
-import PeerPage from "@/src/app/peer/peer";
-import { useCallProvider } from "@/src/contexts/app/call-provider";
-import { CallWindow } from "./call-window";
+import { apiClient } from "@/lib/api-client";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
   const { chatId } = useMessagesContext();
 
   async function createMessage() {
-    await axios.post(`/api/chats/${chatId}/messages`, { content });
+    await apiClient.post(`/users/@me/chats/${chatId}/messages`, { content });
     setContent("");
   }
 
@@ -36,18 +33,11 @@ function ChatInput() {
 }
 
 export function ChatPanel() {
-  const { callType } = useCallProvider();
   return (
     <div className="flex flex-col overflow-hidden h-full min-w-[400px]">
       <ChatPanelTopBar />
-      {callType != "idle" ? (
-        <CallWindow />
-      ) : (
-        <>
-          <Chats />
-          <ChatInput />
-        </>
-      )}
+      <Chats />
+      <ChatInput />
     </div>
   );
 }

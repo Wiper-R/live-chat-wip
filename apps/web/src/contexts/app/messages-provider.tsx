@@ -1,36 +1,44 @@
 "use client";
-import { createCustomContext } from "@/src/lib/utils";
-import axios from "axios";
-import { PropsWithChildren } from "react";
+import { createCustomContext } from "@/lib/utils";
+import { PropsWithChildren, useEffect } from "react";
 import { useQuery } from "react-query";
-import { chat } from "@/src/lib/query-key-factory";
-import { Message } from "@live-chat/shared/prisma";
+import { chats } from "@/lib/query-key-factory";
+import { apiClient } from "@/lib/api-client";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useChatsContext } from "./chats-provider";
+
+type Message = any;
 
 type MessagesContext = {
   messages: Message[];
-  loadMoreMessages: () => void;
-  chatId: number;
+  chatId: string;
 };
 
 const [Context, useMessagesContext] = createCustomContext<MessagesContext>();
 
 type MessageProviderProps = PropsWithChildren & {
-  chatId: number;
+  chatId: string;
 };
 
 export function MessagesProvider({ chatId, children }: MessageProviderProps) {
   const { data } = useQuery({
     async queryFn() {
-      const res = await axios.get(`/api/chats/${chatId}/messages`);
+      const res = await apiClient.get(`/users/@me/chats/${chatId}/messages`);
       return res.data;
     },
-    queryKey: chat.messages(chatId),
+    queryKey: chats.messages(chatId),
   });
-  function loadMoreMessages() {}
+  const { setSelectedChatId } = useChatsContext();
+  useEffect(() => {
+    setSelectedChatId(chatId);
+
+    return () => {
+      setSelectedChatId(null);
+    };
+  }, []);
   return (
-    <Context.Provider
-      value={{ messages: data || [], loadMoreMessages, chatId }}
-    >
+    <Context.Provider value={{ messages: data || [], chatId }}>
       {children}
     </Context.Provider>
   );

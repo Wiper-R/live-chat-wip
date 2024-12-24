@@ -26,6 +26,10 @@ router.post("/", async (req, res) => {
 
   var relationship = await prisma.relationship.findUnique({
     where: { userIds },
+    include: {
+      Recipient: true,
+      Sender: true,
+    },
   });
 
   if (relationship && relationship.senderId == senderId) {
@@ -39,6 +43,10 @@ router.post("/", async (req, res) => {
     relationship = await prisma.relationship.update({
       where: { id: relationship.id },
       data: { status: "accepted" },
+      include: {
+        Recipient: true,
+        Sender: true,
+      },
     });
 
     res.json(relationship);
@@ -51,6 +59,10 @@ router.post("/", async (req, res) => {
       recipientId: recipientId,
       userIds,
     },
+    include: {
+      Recipient: true,
+      Sender: true,
+    },
   });
 
   res.json(relationship);
@@ -58,7 +70,7 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const type = await z
-    .enum(["incoming", "outgoing", "friends"])
+    .enum(["pending", "friends"])
     .default("friends")
     .parseAsync(req.query.type);
 
@@ -69,23 +81,25 @@ router.get("/", async (req, res) => {
         status: "accepted",
         userIds: { has: req.userId },
       },
+      include: {
+        Recipient: true,
+        Sender: true,
+      },
     });
-  } else if (type == "incoming") {
+  } else if (type == "pending") {
     relationships = await prisma.relationship.findMany({
       where: {
         status: "pending",
-        recipientId: req.userId,
+      },
+      include: {
+        Recipient: true,
+        Sender: true,
       },
     });
   } else {
-    relationships = await prisma.relationship.findMany({
-      where: {
-        status: "pending",
-        senderId: req.userId,
-      },
-    });
+    res.json({ message: "Invalid relationship type" });
+    return;
   }
-
   res.json(relationships);
 });
 
@@ -96,6 +110,7 @@ router.patch("/:id", async (req, res) => {
 
   var relationship = await prisma.relationship.findFirst({
     where: { id: req.params.id, recipientId: req.userId },
+    include: { Recipient: true, Sender: true },
   });
 
   if (!relationship) {
@@ -118,6 +133,7 @@ router.patch("/:id", async (req, res) => {
       data: {
         status: "accepted",
       },
+      include: { Recipient: true, Sender: true },
     });
     res.json(relationship);
     return;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth";
-import { CreateChat } from "../../types";
+import { CreateChat, CreateMessage } from "../../types";
 import prisma from "@repo/db/client";
 
 export const router = Router();
@@ -51,6 +51,55 @@ router.get("/", async (req, res) => {
     where: {
       Recipients: { some: { id: req.userId } },
     },
+    include: { Recipients: true },
   });
   res.json(chats);
+});
+
+router.get("/:chatId/messages", async (req, res) => {
+  // Check chat permissions
+  try {
+    await prisma.chat.findUnique({
+      where: {
+        id: req.params.chatId,
+        Recipients: { some: { id: req.userId } },
+      },
+    });
+  } catch (e) {
+    res.status(403).json({ message: "Forbidden" });
+    return;
+  }
+
+  const messages = await prisma.message.findMany({
+    where: { chatId: req.params.chatId },
+    orderBy: { createdAt: "asc" },
+    include: { Sender: true },
+  });
+
+  res.json(messages);
+});
+
+router.post("/:chatId/messages", async (req, res) => {
+  const data = await CreateMessage.parseAsync(req.body);
+  try {
+    await prisma.chat.findUnique({
+      where: {
+        id: req.params.chatId,
+        Recipients: { some: { id: req.userId } },
+      },
+    });
+  } catch (e) {
+    res.status(403).json({ message: "Forbidden" });
+    return;
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      content: data.content,
+      senderId: req.userId!,
+      chatId: req.params.chatId,
+    },
+    include: { Sender: true },
+  });
+  res.status(201).json(message);
 });

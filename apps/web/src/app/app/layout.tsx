@@ -1,10 +1,8 @@
 "use client";
-import { Sidebar } from "@/src/components/app/sidebar";
-import { Loader } from "@/src/components/loader";
-import { CallProvider } from "@/src/contexts/app/call-provider";
-import { ChatsProvider } from "@/src/contexts/app/chats-provider";
-import { SocketProvider } from "@/src/contexts/app/socket-provider";
-import { UserProvider, useUser } from "@/src/contexts/app/user-provider";
+import { Sidebar } from "@/components/app/sidebar";
+import { Loader } from "@/components/loader";
+import { ChatsProvider } from "@/contexts/app/chats-provider";
+import { UserProvider, useUser } from "@/contexts/app/user-provider";
 import { PropsWithChildren } from "react";
 
 export default function AppLayout({ children }: PropsWithChildren) {
@@ -16,8 +14,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
 }
 
 function LayoutInternal({ children }: PropsWithChildren) {
-  const { user, isLoading } = useUser();
-  if (isLoading || !user)
+  const { user } = useUser();
+  if (!user)
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader />
@@ -25,16 +23,12 @@ function LayoutInternal({ children }: PropsWithChildren) {
     );
   else {
     return (
-      <SocketProvider>
-        <CallProvider>
-          <ChatsProvider>
-            <div className="flex h-screen">
-              <Sidebar />
-              <div className="flex-grow">{children}</div>
-            </div>
-          </ChatsProvider>
-        </CallProvider>
-      </SocketProvider>
+      <ChatsProvider>
+        <div className="flex h-screen">
+          <Sidebar />
+          <div className="flex-grow">{children}</div>
+        </div>
+      </ChatsProvider>
     );
   }
 }

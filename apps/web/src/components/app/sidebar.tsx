@@ -1,9 +1,9 @@
 "use client";
-import { Input } from "@/src/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { FriendsDialog } from "./friends-dialog";
-import { useChatsContext } from "@/src/contexts/app/chats-provider";
+import { useChatsContext } from "@/contexts/app/chats-provider";
 import Link from "next/link";
-import { useUser } from "@/src/contexts/app/user-provider";
+import { useUser } from "@/contexts/app/user-provider";
 
 function SideToolbox() {
   return (
@@ -28,7 +28,7 @@ function ChatList() {
   return (
     <div className="flex flex-col overflow-scroll w-full py-2">
       {chats.map((chat) => {
-        var chatUser = chat.Users.find((u: any) => u.id != user!.id);
+        var chatUser = chat.Recipients.find((u: any) => u.id != user!.id);
         return (
           <Link
             className="px-5 py-2 space-x-3 flex items-center"

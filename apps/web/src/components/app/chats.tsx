@@ -1,7 +1,7 @@
 "use client";
-import { useMessagesContext } from "@/src/contexts/app/messages-provider";
-import { useUser } from "@/src/contexts/app/user-provider";
-import { cn } from "@/src/lib/utils";
+import { useMessagesContext } from "@/contexts/app/messages-provider";
+import { useUser } from "@/contexts/app/user-provider";
+import { cn } from "@/lib/utils";
 import moment from "moment";
 
 function Message({

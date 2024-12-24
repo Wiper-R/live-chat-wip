@@ -1,8 +1,10 @@
 "use client";
-import { createCustomContext } from "@/src/lib/utils";
-import axios, { AxiosError } from "axios";
+import { apiClient } from "@/lib/api-client";
+import { createCustomContext } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren } from "react";
+import { useQuery } from "react-query";
+import queryFactory from "@/lib/query-key-factory";
 
 type User = {
   id: number;
@@ -13,33 +15,21 @@ type User = {
 
 const [Context, useUser] = createCustomContext<{
   user?: User;
-  isLoading: boolean;
 }>();
 
 export function UserProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<User>();
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  useEffect(() => {
-    async function getUser() {
-      try {
-        const res = await axios.get("/api/users/");
-        setUser(res.data);
-      } catch (e) {
-        if (e instanceof AxiosError) {
-          if (e.status == 401) {
-            router.push("/final-steps");
-          }
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    getUser();
-  }, []);
-  return (
-    <Context.Provider value={{ user, isLoading }}>{children}</Context.Provider>
-  );
+  const { data: user } = useQuery({
+    async queryFn() {
+      const res = await apiClient.get("/users/@me");
+      return res.data as User;
+    },
+    queryKey: queryFactory.users.current(),
+    onError() {
+      router.push("/signin");
+    },
+  });
+  return <Context.Provider value={{ user }}>{children}</Context.Provider>;
 }
 
 export { useUser };

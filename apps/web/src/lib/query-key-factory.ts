@@ -1,7 +1,7 @@
-export const chat = {
-  all: ["chat"] as const,
-  byId: (chatId: number) => [...chat.all, chatId] as const,
-  messages: (chatId: number) => [...chat.all, "messages", +chatId] as const,
+export const chats = {
+  all: ["chats"] as const,
+  byId: (chatId: string) => [...chats.all, chatId] as const,
+  messages: (chatId: string) => [...chats.all, "messages", +chatId] as const,
 };
 
 export const friends = {
@@ -12,5 +12,8 @@ export const friends = {
 
 export const users = {
   all: ["users"] as const,
-  search: (query: string) => [...users.all, "search", query],
+  current: () => [...users.all, "@me"] as const,
+  search: (query: string) => [...users.all, "search", query] as const,
 };
+
+export default { chats, friends, users };

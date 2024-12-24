@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/src/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   DialogTitle,
@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTrigger,
-} from "@/src/components/ui/dialog";
+} from "@/components/ui/dialog";
 import { useMutation, useQuery } from "react-query";
 import axios from "axios";
 import {
@@ -17,19 +17,16 @@ import {
   useEffect,
   useState,
 } from "react";
-import { Input } from "@/src/components/ui/input";
+import { Input } from "@/components/ui/input";
 import useDebounced from "use-debounced";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/src/components/ui/tabs";
-import { ScrollArea } from "@/src/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Loader } from "../loader";
-import * as queryFactory from "@/src/lib/query-key-factory";
+import * as queryFactory from "@/lib/query-key-factory";
+import { apiClient } from "@/lib/api-client";
+import { useUser } from "@/contexts/app/user-provider";
 
 type User = { name?: string; email: string; username: string; id: number };
 
@@ -125,12 +122,12 @@ function FriendList() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 200);
   const {
-    data: users,
+    data: relationships,
     refetch,
     isLoading,
-  } = useQuery<User[]>({
+  } = useQuery<any[]>({
     queryFn: async () => {
-      const res = await axios.get("/api/friends", {
+      const res = await apiClient.get("/users/@me/relationships?type=friends", {
         params: { q: search },
       });
       return res.data;
@@ -139,15 +136,18 @@ function FriendList() {
   });
 
   const context = useContext(FriendsDialogContext)!;
+  const { user } = useUser();
 
   useEffect(() => {
     refetch();
   }, [debouncedSearch, refetch]);
   // TODO: Add loading state
 
-  async function createChat(userId: number) {
+  async function createChat(recipient_id: number) {
     // TODO: Make prisma shared dep (so we can import types here)
-    const res = await axios.post("/api/chats", { userId });
+    const res = await apiClient.post("/users/@me/chats", {
+      recipient_id,
+    });
     const chat = res.data;
     context.setOpen(false);
     router.push(`/app/chats/${chat.id}`);
@@ -164,19 +164,28 @@ function FriendList() {
         <div className="space-y-2 p-1 pr-4">
           {isLoading ? (
             <Loader />
-          ) : users && users.length > 0 ? (
-            users.map((user) => (
-              <Entry key={user.id}>
-                <UserComponent
-                  avatar=""
-                  name={user.name || "Undefined"}
-                  username={user.username}
-                />
-                <Button className="ml-auto" onClick={() => createChat(user.id)}>
-                  Message
-                </Button>
-              </Entry>
-            ))
+          ) : relationships && relationships.length > 0 ? (
+            relationships.map((relationship) => {
+              const otherUser =
+                relationship.senderId == user?.id
+                  ? relationship.Recipient
+                  : relationship.Sender;
+              return (
+                <Entry key={otherUser.id}>
+                  <UserComponent
+                    avatar=""
+                    name={otherUser.name || "Undefined"}
+                    username={otherUser.username}
+                  />
+                  <Button
+                    className="ml-auto"
+                    onClick={() => createChat(otherUser.id)}
+                  >
+                    Message
+                  </Button>
+                </Entry>
+              );
+            })
           ) : (
             <div className="text-center text-gray-500">No Results</div>
           )}
@@ -202,7 +211,7 @@ function PendingRequests() {
     isLoading,
   } = useQuery<FriendRequest[]>({
     queryFn: async () => {
-      const res = await axios.get("/api/friends/requests", {
+      const res = await apiClient.get("/users/@me/relationships?type=pending", {
         params: { q: search },
       });
       return res.data;

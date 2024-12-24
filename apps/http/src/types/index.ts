@@ -19,6 +19,10 @@ export const SendFriendRequest = z.object({
   username: z.string(),
 });
 
+export const CreateMessage = z.object({
+  content: z.string(),
+});
+
 declare global {
   namespace Express {
     export interface Request {
