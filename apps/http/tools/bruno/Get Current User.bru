@@ -1,0 +1,11 @@
+meta {
+  name: Get Current User
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{BASE_URL}}/users/@me
+  body: none
+  auth: inherit
+}

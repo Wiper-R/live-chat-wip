@@ -1,17 +1,12 @@
 import express from "express";
 import "dotenv/config";
-import http from "http";
-import prisma from "@repo/db/client";
+import { router } from "./api/v1";
 import env from "./env";
 const app = express();
-const server = http.createServer(app);
 
 app.use(express.json());
-app.get("/", async (req, res) => {
-  const users = await prisma.user.findMany({});
-  res.json(users);
-});
+app.use("/api/v1", router);
 
-app.listen(env.SERVER_PORT, () => {
-  console.log(`Server is live at ${env.SERVER_PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`Server is live at ${env.PORT}`);
 });

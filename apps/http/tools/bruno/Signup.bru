@@ -1,0 +1,19 @@
+meta {
+  name: Signup
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{BASE_URL}}/signup
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "shivang",
+    "name": "Shivang Rathore",
+    "password": "Shivang@1"
+  }
+}

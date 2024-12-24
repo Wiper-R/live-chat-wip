@@ -14,55 +14,45 @@ datasource db {
 }
 
 model User {
-  id               Int             @id @default(autoincrement())
-  email            String          @unique
-  name             String?
-  username         String          @unique
-  sentRequests     FriendRequest[] @relation("SentRequests")
-  receivedRequests FriendRequest[] @relation("ReceivedRequests")
-  Account          Account[]
-  Friendship       Friendship[]
-  Chats            Chat[]
-  createdAt        DateTime        @default(now())
-  Messages         Message[]
-}
-
-model Account {
-  id        String   @id
-  User      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  createdAt DateTime @default(now())
-}
-
-model FriendRequest {
-  id         Int      @id @default(autoincrement())
-  senderId   Int
-  receiverId Int
-  sender     User     @relation("SentRequests", fields: [senderId], references: [id])
-  receiver   User     @relation("ReceivedRequests", fields: [receiverId], references: [id])
-  createdAt  DateTime @default(now())
-
-  @@unique([senderId, receiverId])
-}
-
-model Friendship {
-  id    Int    @id @default(autoincrement())
-  Users User[]
+  id                   String         @id @default(cuid())
+  username             String         @unique
+  name                 String
+  password             String
+  Message              Message[]
+  Chats                Chat[]
+  OutgoingRelationship Relationship[] @relation(name: "OutgoingRelationship")
+  IncomingRelationship Relationship[] @relation(name: "IncomingRelationship")
 }
 
 model Chat {
-  id        Int       @id @default(autoincrement())
-  Users     User[]
-  createdAt DateTime  @default(now())
-  Messages  Message[]
+  id         String    @id @default(cuid())
+  Message    Message[]
+  Recipients User[]
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   content   String
+  chatId    String
+  senderId  String
   createdAt DateTime @default(now())
-  chatId    Int
-  Sender    User     @relation(fields: [senderId], references: [id])
-  Chat      Chat     @relation(fields: [chatId], references: [id])
-  senderId  Int
+  Sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  Chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+model Relationship {
+  id          String             @id @default(cuid())
+  recipientId String
+  senderId    String
+  status      RelationshipStatus @default(pending)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @default(now())
+  Sender      User               @relation(name: "OutgoingRelationship", fields: [senderId], references: [id], onDelete: Cascade)
+  Recipient   User               @relation(name: "IncomingRelationship", fields: [recipientId], references: [id], onDelete: Cascade)
+  userIds     String[]           @unique
+}
+
+enum RelationshipStatus {
+  pending
+  accepted
 }
