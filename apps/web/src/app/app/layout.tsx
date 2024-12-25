@@ -2,14 +2,15 @@
 import { Sidebar } from "@/components/app/sidebar";
 import { Loader } from "@/components/loader";
 import { ChatsProvider } from "@/contexts/app/chats-provider";
-import { UserProvider, useUser } from "@/contexts/app/user-provider";
+import { SocketProvider } from "@/contexts/app/socket-provider";
+import { useUser } from "@/contexts/app/user-provider";
 import { PropsWithChildren } from "react";
 
 export default function AppLayout({ children }: PropsWithChildren) {
   return (
-    <UserProvider>
+    <SocketProvider>
       <LayoutInternal>{children}</LayoutInternal>
-    </UserProvider>
+    </SocketProvider>
   );
 }
 

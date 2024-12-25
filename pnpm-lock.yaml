@@ -178,6 +178,9 @@ importers:
 
   apps/ws:
     dependencies:
+      axios:
+        specifier: ^1.7.9
+        version: 1.7.9
       socket.io:
         specifier: ^4.8.1
         version: 4.8.1
