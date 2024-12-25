@@ -1,0 +1,10 @@
+{
+  "name": "@repo/redis",
+  "private": true,
+  "exports": {
+    "./client": "./src/index.ts"
+  },
+  "dependencies": {
+    "ioredis": "^5.4.2"
+  }
+}

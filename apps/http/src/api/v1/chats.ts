@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth";
 import { CreateChat, CreateMessage } from "../../types";
 import prisma from "@repo/db/client";
+import redis from "@repo/redis/client";
 
 export const router = Router();
 router.use(authMiddleware);
@@ -99,7 +100,15 @@ router.post("/:chatId/messages", async (req, res) => {
       senderId: req.userId!,
       chatId: req.params.chatId,
     },
-    include: { Sender: true },
+    include: {
+      Sender: true,
+      Chat: {
+        include: {
+          Recipients: true,
+        },
+      },
+    },
   });
+  await redis.publish("message:create", JSON.stringify(message));
   res.status(201).json(message);
 });

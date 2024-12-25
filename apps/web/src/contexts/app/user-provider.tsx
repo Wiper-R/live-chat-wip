@@ -28,6 +28,7 @@ export function UserProvider({ children }: PropsWithChildren) {
     onError() {
       router.push("/signin");
     },
+    retry: false,
   });
   return <Context.Provider value={{ user }}>{children}</Context.Provider>;
 }

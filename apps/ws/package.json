@@ -7,6 +7,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@repo/redis": "workspace:*",
+    "@repo/api-types": "workspace:*",
     "axios": "^1.7.9",
     "socket.io": "^4.8.1",
     "ts-node": "^10.9.2"
