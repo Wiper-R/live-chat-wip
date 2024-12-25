@@ -1,12 +1,9 @@
 "use client";
 
 import { createCustomContext } from "@/lib/utils";
-import { PropsWithChildren, useEffect, useRef } from "react";
-import { Message } from "@repo/api-types";
+import { PropsWithChildren, useEffect, useState } from "react";
 
 import { Socket, io } from "socket.io-client";
-import { useQueryClient } from "react-query";
-import queryKeyFactory from "@/lib/query-key-factory";
 
 type SocketContext = {
   socket?: Socket;
@@ -14,31 +11,19 @@ type SocketContext = {
 const [Context, useSocket] = createCustomContext<SocketContext>();
 
 export function SocketProvider({ children }: PropsWithChildren) {
-  const socketRef = useRef<Socket>();
-  const queryClient = useQueryClient();
+  const [_socket, setSocket] = useState<Socket>();
   useEffect(() => {
     const socket = io();
-    socketRef.current = socket;
-
-    socket.on("message:create", (message: Message) => {
-      queryClient.setQueryData(
-        queryKeyFactory.chats.messages(message.chatId),
-        (oldData: Message[] | undefined) => {
-          if (!oldData) return [message];
-          return [...oldData, message];
-        },
-      );
-    });
-
+    setSocket(socket);
     return () => {
-      socketRef.current?.disconnect();
-      socketRef.current = undefined;
+      socket.disconnect();
+      setSocket(_socket);
     };
   }, []);
   return (
     <Context.Provider
       value={{
-        socket: socketRef.current,
+        socket: _socket,
       }}
     >
       {children}
