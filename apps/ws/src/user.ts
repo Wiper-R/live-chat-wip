@@ -51,7 +51,7 @@ export class SocketUser {
       console.log(
         `User (${this.user.username}) (Peer) is disconnected with id ${peerId}`,
       );
-      this.peerId = null;
+      this.peerId = peerId;
     });
   }
 
