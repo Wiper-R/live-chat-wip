@@ -1,6 +1,7 @@
 "use client";
-import { Nullable } from "@live-chat/shared/types";
 import { useEffect, useState } from "react";
+
+type Nullable<T> = T | null;
 
 export type Status = "loading" | "idle" | "rejected" | "success";
 

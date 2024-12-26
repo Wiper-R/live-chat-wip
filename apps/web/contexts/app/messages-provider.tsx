@@ -44,7 +44,7 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
       (oldData: Message[] | undefined) => {
         if (!oldData) return [message];
         return [...oldData, message];
-      },
+      }
     );
   }
 

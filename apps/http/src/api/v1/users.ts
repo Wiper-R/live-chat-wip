@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth";
 import prisma from "@repo/db/client";
-import z from "zod";
-import { SendFriendRequest } from "../../types";
 
 export const router = Router();
 

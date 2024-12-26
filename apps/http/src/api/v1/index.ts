@@ -7,6 +7,7 @@ import env from "../../env";
 import { router as usersRouter } from "./users";
 import { router as relationshipRouter } from "./relationships";
 import { router as chatsRouter } from "./chats";
+import moment from "moment";
 
 const router = Router();
 
@@ -57,6 +58,7 @@ router.post("/signin", async (req, res) => {
     );
     res.cookie("token", token, {
       httpOnly: true,
+      expires: moment().add({ hours: 24 }).toDate(),
     });
     res.json({});
   } catch (e) {
