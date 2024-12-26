@@ -9,7 +9,7 @@ function Message({
   createdAt,
   senderId,
 }: {
-  senderId: number;
+  senderId: string;
   content: string;
   createdAt: string;
 }) {
@@ -19,7 +19,7 @@ function Message({
     <div
       className={cn(
         "max-w-[400px] p-2 border-border border rounded relative",
-        isSender && "ml-auto"
+        isSender && "ml-auto",
       )}
     >
       <p className="text-sm">

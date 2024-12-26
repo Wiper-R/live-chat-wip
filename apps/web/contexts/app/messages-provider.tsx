@@ -1,5 +1,5 @@
 "use client";
-import { createCustomContext } from "@/lib/utils";
+import { createContext } from "@/lib/utils";
 import { PropsWithChildren, useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import queryKeyFactory, { chats } from "@/lib/query-key-factory";
@@ -13,7 +13,7 @@ type MessagesContext = {
   chatId: string;
 };
 
-const [Context, useMessagesContext] = createCustomContext<MessagesContext>();
+const [Context, useMessagesContext] = createContext<MessagesContext>();
 
 type MessageProviderProps = PropsWithChildren & {
   chatId: string;
@@ -44,17 +44,16 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
       (oldData: Message[] | undefined) => {
         if (!oldData) return [message];
         return [...oldData, message];
-      }
+      },
     );
   }
 
   useEffect(() => {
-    if (!socket) return;
     socket.on("message:create", handleMessageCreate);
     return () => {
       socket.off("message:create", handleMessageCreate);
     };
-  }, [socket]);
+  }, []);
 
   return (
     <Context.Provider value={{ messages: data || [], chatId }}>

@@ -1,7 +1,7 @@
 "use client";
 import { apiClient } from "@/lib/api-client";
 import queryKeyFactory from "@/lib/query-key-factory";
-import { createCustomContext } from "@/lib/utils";
+import { createContext } from "@/lib/utils";
 import { PropsWithChildren, useState } from "react";
 import { useQuery } from "react-query";
 
@@ -14,7 +14,7 @@ type ChatsContext = {
   setSelectedChatId: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-const [Context, useChatsContext] = createCustomContext<ChatsContext>();
+const [Context, useChatsContext] = createContext<ChatsContext>();
 
 export function ChatsProvider({ children }: PropsWithChildren) {
   const { data } = useQuery({

@@ -6,14 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function createCustomContext<T>() {
+export function createContext<T>() {
   const Context = React.createContext<T | undefined>(undefined);
 
   function useCustomContext() {
     const ctx = useContext(Context);
     if (!ctx) {
       throw new Error(
-        `${useCustomContext.name} must be used inside ${Context.displayName}`
+        `${useCustomContext.name} must be used inside ${Context.displayName}`,
       );
     }
 

@@ -2,6 +2,7 @@
 import { Sidebar } from "@/components/app/sidebar";
 import { Loader } from "@/components/loader";
 import { ChatsProvider } from "@/contexts/app/chats-provider";
+import { PeerProvider } from "@/contexts/app/peer-provider";
 import { SocketProvider } from "@/contexts/app/socket-provider";
 import { useUser } from "@/contexts/app/user-provider";
 import { PropsWithChildren } from "react";
@@ -9,7 +10,9 @@ import { PropsWithChildren } from "react";
 export default function AppLayout({ children }: PropsWithChildren) {
   return (
     <SocketProvider>
-      <LayoutInternal>{children}</LayoutInternal>
+      <PeerProvider>
+        <LayoutInternal>{children}</LayoutInternal>
+      </PeerProvider>
     </SocketProvider>
   );
 }

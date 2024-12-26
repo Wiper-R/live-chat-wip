@@ -12,10 +12,13 @@ export class SocketUser {
   socket: Socket;
   apiClient: AxiosInstance;
   user: APIUser;
+  peerId: string | null;
   constructor(socket: Socket, apiClient: AxiosInstance, user: APIUser) {
     this.socket = socket;
     this.apiClient = apiClient;
     this.user = user;
+    this.peerId = null;
+    this.registerListeners();
   }
 
   static async create(socket: Socket): Promise<SocketUser> {
@@ -30,6 +33,26 @@ export class SocketUser {
     const sm = new SocketUser(socket, apiClient, user);
     UserManager.getInstance().setUser(user.id, sm);
     return sm;
+  }
+
+  registerListeners() {
+    this.socket.on("peer:connected", (peerId: string) => {
+      this.peerId = peerId;
+      console.log(
+        `User (${this.user.username}) (Peer) is connected with id ${this.peerId}`,
+      );
+    });
+
+    this.socket.on("peer:disconnected", () => {
+      if (this.peerId == null) {
+        return;
+      }
+      let peerId = this.peerId;
+      console.log(
+        `User (${this.user.username}) (Peer) is disconnected with id ${peerId}`,
+      );
+      this.peerId = null;
+    });
   }
 
   async destroy() {

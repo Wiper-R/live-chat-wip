@@ -1,34 +1,35 @@
 "use client";
 
-import { createCustomContext } from "@/lib/utils";
-import React, { useEffect, useRef, useState } from "react";
+import { createContext } from "@/lib/utils";
+import React, { useEffect, useRef } from "react";
 import { PropsWithChildren } from "react";
 
 import { io, Socket } from "socket.io-client";
 
 type SocketContext = {
-  socket: Socket | null;
+  socket: Socket;
 };
-const [Context, useSocket] = createCustomContext<SocketContext>();
+const [Context, useSocket] = createContext<SocketContext>();
 
-export const SocketProvider = React.memo(({ children }: PropsWithChildren) => {
-  const [_socket, setSocket] = useState<Socket | null>(null);
+export const SocketProvider = ({ children }: PropsWithChildren) => {
+  const socketRef = useRef(io({ autoConnect: false }));
+
   useEffect(() => {
-    const socket = io();
-    setSocket(socket);
+    socketRef.current.open();
     return () => {
-      socket.disconnect();
-      setSocket(null);
+      socketRef.current.close();
     };
   }, []);
+
   return (
     <Context.Provider
       value={{
-        socket: _socket,
+        socket: socketRef.current,
       }}
     >
       {children}
     </Context.Provider>
   );
-});
+};
+
 export { useSocket };

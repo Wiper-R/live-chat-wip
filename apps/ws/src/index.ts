@@ -6,7 +6,6 @@ import { UserManager } from "./user-manager";
 
 const io = new Server({ addTrailingSlash: false });
 io.on("connection", async (socket) => {
-  console.log(`Client connected ${socket.id}`);
   try {
     var user = await SocketUser.create(socket);
   } catch (e) {
@@ -14,7 +13,6 @@ io.on("connection", async (socket) => {
     return;
   }
   socket.on("disconnect", async () => {
-    console.log(`Client disconnected ${socket.id}`);
     await user.destroy();
   });
 });

@@ -1,19 +1,13 @@
 "use client";
 import { apiClient } from "@/lib/api-client";
-import { createCustomContext } from "@/lib/utils";
+import { createContext } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { PropsWithChildren } from "react";
 import { useQuery } from "react-query";
 import queryFactory from "@/lib/query-key-factory";
+import { User } from "@repo/api-types";
 
-type User = {
-  id: number;
-  email: string;
-  name?: string;
-  username: string;
-};
-
-const [Context, useUser] = createCustomContext<{
+const [Context, useUser] = createContext<{
   user?: User;
 }>();
 
