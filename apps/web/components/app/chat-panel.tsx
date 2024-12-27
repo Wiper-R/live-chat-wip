@@ -5,6 +5,8 @@ import { Chats } from "./chats";
 import { useMessagesContext } from "@/contexts/app/messages-provider";
 import { ChatPanelTopBar } from "./chat-panel-topbar";
 import { apiClient } from "@/lib/api-client";
+import { useSocket } from "@/contexts/app/socket-provider";
+import { VideoChat } from "./video-chat";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
@@ -33,10 +35,12 @@ function ChatInput() {
 }
 
 export function ChatPanel() {
+  const { callState } = useSocket();
+
   return (
     <div className="flex flex-col overflow-hidden h-full min-w-[400px]">
       <ChatPanelTopBar />
-      <Chats />
+      {callState.state == "idle" ? <Chats /> : <VideoChat />}
       <ChatInput />
     </div>
   );

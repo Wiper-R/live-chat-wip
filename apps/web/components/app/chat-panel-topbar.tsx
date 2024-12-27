@@ -3,17 +3,19 @@ import { useUser } from "@/contexts/app/user-provider";
 import { Button } from "../ui/button";
 import { VideoIcon } from "lucide-react";
 import { useChatsContext } from "@/contexts/app/chats-provider";
+import { useSocket } from "@/contexts/app/socket-provider";
 
 function VideoCallButton() {
+  const { call } = useSocket();
+  const { selectedChat: chat } = useChatsContext();
   return (
-    <Button variant="outline" onClick={() => {}}>
+    <Button variant="outline" onClick={() => call(chat)}>
       <VideoIcon />
     </Button>
   );
 }
 
 export function ChatPanelTopBar() {
-  // FIXME: Display active chat user, not current user
   // TODO: Support multiple users (but not for now)
   const { user } = useUser();
   const { selectedChat } = useChatsContext();
