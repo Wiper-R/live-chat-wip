@@ -12,20 +12,20 @@ export class UserManager {
     return this.instance;
   }
 
-  getUser(userId: string) {
-    return this.users.get(userId);
+  static getUser(userId: string) {
+    return this.getInstance().users.get(userId);
   }
 
-  setUser(userId: string, socketUser: SocketUser) {
-    return this.users.set(userId, socketUser);
+  static setUser(userId: string, socketUser: SocketUser) {
+    return this.getInstance().users.set(userId, socketUser);
   }
 
-  deleteUser(userId: string) {
-    return this.users.delete(userId);
+  static deleteUser(userId: string) {
+    return this.getInstance().users.delete(userId);
   }
 
   static async broadCast(userId: string, event: string, message: any) {
-    const user = this.getInstance().getUser(userId);
+    const user = this.getUser(userId);
     if (!user) return;
     user.socket.emit(event, message);
   }

@@ -54,19 +54,22 @@ export const SocketProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const socket = socketRef.current;
     if (!user) return;
-    socket.on("call:initiate", (from: User, chat: Chat, callId: string) => {
-      if (from.id == user.id) {
-        setCallState({ state: "calling", chat, callId });
-      } else {
-        setCallState({ state: "receiving_call", from, chat, callId });
-      }
-    });
+    socket.on(
+      "call:initiate",
+      ({ from, chat, callId }: { from: User; chat: Chat; callId: string }) => {
+        if (from.id == user.id) {
+          setCallState({ state: "calling", chat, callId });
+        } else {
+          setCallState({ state: "receiving_call", from, chat, callId });
+        }
+      },
+    );
   }, [user]);
 
   function call(chat: Chat) {
     const socket = socketRef.current;
     socket.open();
-    socketRef.current.emit("call:initiate", chat.id);
+    socketRef.current.emit("call:initiate", { chatId: chat.id });
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MediaConnection, Peer } from "peerjs";
 import { useSocket } from "@/contexts/app/socket-provider";
+import { useMediaStream } from "@/hooks/use-media-stream";
 
 export function VideoChat() {
   const peerRef = useRef<Peer>(null);
@@ -20,9 +21,6 @@ export function VideoChat() {
     peerRef.current = peer;
     peer.once("open", (id: string) => {
       console.log(`${id} peer connected with id`);
-      if (callState.state != "idle") {
-        socket.emit("call:ready", id, callState.callId);
-      }
       setPeerId(id);
     });
     peer.once("call", (call) => {
@@ -31,20 +29,35 @@ export function VideoChat() {
     });
   }, []);
 
+  const { stream } = useMediaStream();
+
   useEffect(() => {
+    if (!stream) return;
     socket.open();
     const peer = peerRef.current!;
-    socket.on("call:start", (peerId: string) => {
-      const stream = new MediaStream();
-      const call = peer.call(peerId, stream);
-      setCallObject(call);
-    });
-  }, [peerId]);
+    socket.on(
+      "call:start",
+      ({ receiverPeerId }: { receiverPeerId: string }) => {
+        const call = peer.call(receiverPeerId, stream);
+        setCallObject(call);
+      },
+    );
+    return () => {
+      socket.off("call:start");
+    };
+  }, [peerId, stream]);
+
+  useEffect(() => {
+    if (!stream || !peerId) return;
+    localVideoRef.current.srcObject = stream;
+    if (callState.state != "idle") {
+      socket.emit("call:ready", { peerId, callId: callState.callId });
+    }
+  }, [stream, peerId]);
 
   useEffect(() => {
     if (callAccepted && callObject && callState.state == "receiving_call") {
-      const stream = new MediaStream();
-      callObject.answer(stream);
+      callObject.answer(stream!);
       console.log("Call answered");
     }
   }, [callAccepted, callObject]);

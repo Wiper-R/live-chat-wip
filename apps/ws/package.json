@@ -7,11 +7,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@repo/redis": "workspace:*",
     "@repo/api-types": "workspace:*",
+    "@repo/redis": "workspace:*",
     "axios": "^1.7.9",
     "socket.io": "^4.8.1",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
