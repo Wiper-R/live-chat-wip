@@ -22,6 +22,7 @@ export default function RootLayout({
         <QueryClientProvider>
           <UserProvider>{children}</UserProvider>
         </QueryClientProvider>
+        <div id="call-portal" />
       </body>
     </html>
   );
