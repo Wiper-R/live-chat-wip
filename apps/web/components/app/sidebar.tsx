@@ -4,6 +4,7 @@ import { FriendsDialog } from "./friends-dialog";
 import { useChatsContext } from "@/contexts/app/chats-provider";
 import Link from "next/link";
 import { useUser } from "@/contexts/app/user-provider";
+import { ScrollArea } from "../ui/scroll-area";
 
 function SideToolbox() {
   return (
@@ -26,7 +27,7 @@ function ChatList() {
   const { chats } = useChatsContext();
   const { user } = useUser();
   return (
-    <div className="flex flex-col overflow-scroll w-full py-2">
+    <ScrollArea>
       {chats.map((chat) => {
         var chatUser = chat.Recipients.find((u: any) => u.id != user!.id);
         return (
@@ -40,7 +41,7 @@ function ChatList() {
           </Link>
         );
       })}
-    </div>
+    </ScrollArea>
   );
 }
 

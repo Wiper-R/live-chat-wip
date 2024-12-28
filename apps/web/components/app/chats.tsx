@@ -3,6 +3,7 @@ import { useMessagesContext } from "@/contexts/app/messages-provider";
 import { useUser } from "@/contexts/app/user-provider";
 import { cn } from "@/lib/utils";
 import moment from "moment";
+import { ScrollArea } from "../ui/scroll-area";
 
 function Message({
   content,
@@ -36,7 +37,7 @@ function Message({
 export function Chats() {
   const { messages } = useMessagesContext();
   return (
-    <div className="flex flex-col overflow-auto flex-grow w-full p-8 gap-2">
+    <ScrollArea className="flex flex-col overflow-auto flex-grow w-full p-8 gap-2">
       {messages.map((message) => (
         <div key={message.id} className="w-full flex">
           <Message
@@ -46,6 +47,6 @@ export function Chats() {
           />
         </div>
       ))}
-    </div>
+    </ScrollArea>
   );
 }
