@@ -4,12 +4,15 @@ import { Loader } from "@/components/loader";
 import { ChatsProvider } from "@/contexts/app/chats-provider";
 import { SocketProvider } from "@/contexts/app/socket-provider";
 import { useUser } from "@/contexts/app/user-provider";
+import { CallProvider } from "@/contexts/app/call-provider";
 import { PropsWithChildren } from "react";
 
 export default function AppLayout({ children }: PropsWithChildren) {
   return (
     <SocketProvider>
-      <LayoutInternal>{children}</LayoutInternal>
+      <CallProvider>
+        <LayoutInternal>{children}</LayoutInternal>
+      </CallProvider>
     </SocketProvider>
   );
 }

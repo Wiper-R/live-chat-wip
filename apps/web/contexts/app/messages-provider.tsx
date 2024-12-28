@@ -34,7 +34,7 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
     setSelectedChatId(chatId);
 
     return () => {
-      setSelectedChatId(null);
+      setSelectedChatId("");
     };
   }, []);
 

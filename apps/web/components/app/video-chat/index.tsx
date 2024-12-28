@@ -35,10 +35,10 @@ export function VideoChatComponent({
       </div>
       {/* Controls */}
       <div className="mx-auto absolute left-1/2 bottom-[5%] -translate-x-1/2 space-x-2">
-        <Button className="" size="icon">
+        <Button size="icon">
           <MicIcon />
         </Button>
-        <Button className="" size="icon">
+        <Button size="icon">
           <VideoIcon />
         </Button>
         <Button variant="destructive" size="icon">

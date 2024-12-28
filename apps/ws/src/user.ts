@@ -38,14 +38,14 @@ export class SocketUser {
       CallManager.addCall(call);
       console.log(`Call with ${call.id} created`);
       call.broadCast("both", "call:initiate", {
-        from: this.user,
+        initiator: this.user,
         chat,
         callId: call.id,
       });
     });
 
     this.socket.on(
-      "call:ready",
+      "call:peerReady",
       ({ peerId, callId }: { peerId: string; callId: string }) => {
         const call = CallManager.getCall(callId);
         if (!call) {
@@ -55,6 +55,19 @@ export class SocketUser {
         call.ready(this.user.id, peerId);
       },
     );
+    this.socket.on("call:accept", ({ callId }: { callId: string }) => {
+      console.log("Call has been accepted", callId);
+      const call = CallManager.getCall(callId);
+      if (!call) {
+        console.log("Can't find call with ID", callId);
+        return;
+      }
+      call.broadCast("both", "call:accepted", {
+        callId: call.id,
+        chat: call.chat,
+        inititator: call.caller,
+      });
+    });
   }
 
   registerListeners() {

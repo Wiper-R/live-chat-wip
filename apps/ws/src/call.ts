@@ -63,7 +63,7 @@ export class Call {
 
   callStart() {
     console.log("Call should start");
-    this.broadCast("caller", "call:start", {
+    this.broadCast("caller", "call:receiverReady", {
       receiverPeerId: this.receiver.peerId,
     });
   }

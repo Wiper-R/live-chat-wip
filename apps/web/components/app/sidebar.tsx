@@ -29,7 +29,7 @@ function ChatList() {
   return (
     <ScrollArea>
       {chats.map((chat) => {
-        var chatUser = chat.Recipients.find((u: any) => u.id != user!.id);
+        var chatUser = chat.Recipients.find((u) => u.id != user!.id)!;
         return (
           <Link
             className="px-5 py-2 space-x-3 flex items-center"

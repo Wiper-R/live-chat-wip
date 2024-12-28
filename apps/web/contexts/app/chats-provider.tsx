@@ -2,16 +2,15 @@
 import { apiClient } from "@/lib/api-client";
 import queryKeyFactory from "@/lib/query-key-factory";
 import { createContext } from "@/lib/utils";
+import { Chat } from "@repo/api-types";
 import { PropsWithChildren, useState } from "react";
 import { useQuery } from "react-query";
 
-type Chat = any;
-
 type ChatsContext = {
   chats: Chat[];
-  selectedChat: Chat | null;
-  selectedChatId: string | null;
-  setSelectedChatId: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedChat?: Chat;
+  selectedChatId: string;
+  setSelectedChatId: React.Dispatch<React.SetStateAction<string>>;
 };
 
 const [Context, useChatsContext] = createContext<ChatsContext>();
@@ -20,17 +19,16 @@ export function ChatsProvider({ children }: PropsWithChildren) {
   const { data } = useQuery({
     async queryFn() {
       const res = await apiClient.get("/users/@me/chats");
-      return res.data;
+      return res.data as Chat[];
     },
     queryKey: queryKeyFactory.chats.all,
   });
-  const [selectedChatId, setSelectedChatId] = useState<Chat | null>(null);
+  const [selectedChatId, setSelectedChatId] = useState<string>("");
 
-  const { data: selectedChat } = useQuery<Chat | null>({
+  const { data: selectedChat } = useQuery({
     async queryFn() {
-      if (!selectedChatId) return null;
       const res = await apiClient.get(`/users/@me/chats/${selectedChatId}`);
-      return res.data;
+      return res.data as Chat;
     },
     queryKey: queryKeyFactory.chats.byId(selectedChatId),
   });

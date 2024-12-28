@@ -12,7 +12,7 @@ export function VideoChat() {
   const peerRef = useRef<Peer>(undefined);
   const localVideoRef = useRef<HTMLVideoElement>(null!);
   const remoteVideoRef = useRef<HTMLVideoElement>(null!);
-  const { socket, callState } = useSocket();
+  const { socket } = useSocket();
   const [peerId, setPeerId] = useState<string | null>(null);
   const [callAccepted, setCallAccepted] = useState(false);
   const [callObject, setCallObject] = useState<MediaConnection | null>(null);

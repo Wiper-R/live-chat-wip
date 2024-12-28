@@ -3,13 +3,13 @@ import { useUser } from "@/contexts/app/user-provider";
 import { Button } from "../ui/button";
 import { VideoIcon } from "lucide-react";
 import { useChatsContext } from "@/contexts/app/chats-provider";
-import { useSocket } from "@/contexts/app/socket-provider";
+import { useCall } from "@/contexts/app/call-provider";
 
 function VideoCallButton() {
-  const { call } = useSocket();
+  const { call } = useCall();
   const { selectedChat: chat } = useChatsContext();
   return (
-    <Button variant="outline" onClick={() => call(chat)}>
+    <Button variant="outline" onClick={() => call(chat!.id)}>
       <VideoIcon />
     </Button>
   );
