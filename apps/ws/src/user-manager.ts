@@ -24,9 +24,9 @@ export class UserManager {
     return this.getInstance().users.delete(userId);
   }
 
-  static async broadCast(userId: string, event: string, message: any) {
+  static broadCast(userId: string, event: string, message: any) {
     const user = this.getUser(userId);
-    if (!user) return;
-    user.socket.emit(event, message);
+    if (!user || !user.socket.connected) return false;
+    return user.socket.emit(event, message);
   }
 }

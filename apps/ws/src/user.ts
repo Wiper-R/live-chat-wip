@@ -32,42 +32,43 @@ export class SocketUser {
 
   registerCallListeners() {
     this.socket.on("call:initiate", async ({ chatId }: { chatId: string }) => {
+      // TODO: Implement error detection
       const res = await this.apiClient.get(`/users/@me/chats/${chatId}`);
       const chat: Chat = res.data;
-      const call = new Call(this.user.id, chat);
+      const recipient = Call.getRecipient(chat, this);
+      if (!recipient) {
+        this.socket.emit("call:initiate", {
+          chatId,
+          reason: "User is offline",
+        });
+        return;
+      }
+      const call = new Call(this, chat, recipient);
       CallManager.addCall(call);
-      console.log(`Call with ${call.id} created`);
-      call.broadCast("both", "call:initiate", {
-        initiator: this.user,
-        chat,
+      CallManager.broadCast(call.id, "caller", "call:outgoing", {
         callId: call.id,
+        caller: call.caller,
+        chat,
+      });
+      CallManager.broadCast(call.id, "recipient", "call:incoming", {
+        callId: call.id,
+        caller: call.caller,
+        chat,
       });
     });
 
     this.socket.on(
-      "call:peerReady",
-      ({ peerId, callId }: { peerId: string; callId: string }) => {
+      "call:answered",
+      async ({ callId, peerId }: { callId: string; peerId: string }) => {
         const call = CallManager.getCall(callId);
-        if (!call) {
-          console.log(`Call with ${callId} don't exists`);
-          return;
-        }
-        call.ready(this.user.id, peerId);
+        if (!call) return;
+        if (call.recipient.user.id != this.user.id) return;
+        CallManager.broadCast(call.id, "caller", "call:answered", {
+          peerId,
+          callId,
+        });
       },
     );
-    this.socket.on("call:accept", ({ callId }: { callId: string }) => {
-      console.log("Call has been accepted", callId);
-      const call = CallManager.getCall(callId);
-      if (!call) {
-        console.log("Can't find call with ID", callId);
-        return;
-      }
-      call.broadCast("both", "call:accepted", {
-        callId: call.id,
-        chat: call.chat,
-        inititator: call.caller,
-      });
-    });
   }
 
   registerListeners() {
