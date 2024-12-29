@@ -1,3 +1,4 @@
+import { User } from "@repo/api-types";
 import { Call } from "./call";
 import { SocketUser } from "./user";
 import { UserManager } from "./user-manager";
@@ -27,11 +28,12 @@ export class CallManager {
     return this.getInstance().calls.delete(callId);
   }
 
-  static broadCast(
+  static broadcast(
     callId: string,
     type: CallManagerBroadcastType,
     ev: string,
     message: Record<string, any>,
+    autoEnd: boolean = true,
   ): boolean {
     const call = this.getCall(callId);
 
@@ -45,25 +47,30 @@ export class CallManager {
       return false;
     }
 
-    const clients: SocketUser[] = [];
+    const users: User[] = [];
     if (type == "caller" || type == "all") {
-      clients.push(call.caller);
+      users.push(call.caller);
     }
 
     if (type == "recipient" || type == "all") {
-      clients.push(call.recipient);
+      users.push(call.recipient);
     }
 
-    var success = false;
-    for (const client of clients) {
-      success = success && UserManager.broadCast(client.user.id, ev, message);
+    var success = true;
+    for (let user of users) {
+      if (!success) continue;
+      success = UserManager.broadcast(user.id, ev, message);
+    }
+
+    if (!success && autoEnd) {
+      this.endCall(call, "One of the client is disconnected");
     }
 
     return success;
   }
 
   static endCall(call: Call, reason: string) {
-    this.broadCast(call.id, "all", "call:ended", { reason });
+    this.broadcast(call.id, "all", "call:ended", { reason }, false);
     this.removeCall(call.id);
     call.ended = true;
   }

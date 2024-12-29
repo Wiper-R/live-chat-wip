@@ -35,22 +35,24 @@ export class SocketUser {
       // TODO: Implement error detection
       const res = await this.apiClient.get(`/users/@me/chats/${chatId}`);
       const chat: Chat = res.data;
-      const recipient = Call.getRecipient(chat, this);
+      const recipient = Call.getRecipient(chat, this.user);
       if (!recipient) {
-        this.socket.emit("call:initiate", {
-          chatId,
-          reason: "User is offline",
-        });
+        console.log("Recipient is not connected");
+        // this.socket.emit("call:initiate", {
+        //   chatId,
+        //   reason: "User is offline",
+        //   status: "failed",
+        // });
         return;
       }
-      const call = new Call(this, chat, recipient);
+      const call = new Call(this.user, recipient, chat);
       CallManager.addCall(call);
-      CallManager.broadCast(call.id, "caller", "call:outgoing", {
+      CallManager.broadcast(call.id, "caller", "call:outgoing", {
         callId: call.id,
         caller: call.caller,
         chat,
       });
-      CallManager.broadCast(call.id, "recipient", "call:incoming", {
+      CallManager.broadcast(call.id, "recipient", "call:incoming", {
         callId: call.id,
         caller: call.caller,
         chat,
@@ -62,8 +64,9 @@ export class SocketUser {
       async ({ callId, peerId }: { callId: string; peerId: string }) => {
         const call = CallManager.getCall(callId);
         if (!call) return;
-        if (call.recipient.user.id != this.user.id) return;
-        CallManager.broadCast(call.id, "caller", "call:answered", {
+        if (call.recipient.id != this.user.id) return;
+        console.log("Call answered, emitting");
+        CallManager.broadcast(call.id, "all", "call:answered", {
           peerId,
           callId,
         });

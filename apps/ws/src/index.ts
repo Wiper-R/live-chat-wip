@@ -24,7 +24,7 @@ redis.subscribe("message:create", (err, count) => {
 
 function broadcastMessageCreate(message: Message) {
   for (const recipient of message.Chat.Recipients) {
-    UserManager.broadCast(recipient.id, "message:create", message);
+    UserManager.broadcast(recipient.id, "message:create", message);
   }
 }
 

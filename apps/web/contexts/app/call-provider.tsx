@@ -7,177 +7,152 @@ import {
   useState,
 } from "react";
 import { useSocket } from "./socket-provider";
+import Peer, { MediaConnection } from "peerjs";
 import { IncomingCallDialog } from "@/components/app/video-chat/incoming-call-dialog";
 import { Chat, User } from "@repo/api-types";
-import Peer, { MediaConnection } from "peerjs";
-import { useUser } from "./user-provider";
-import { useMediaStream } from "@/hooks/use-media-stream";
-
-type CallState =
-  | {
-      state: "idle";
-    }
-  | {
-      state: "outgoing" | "incoming" | "ongoing";
-      initiator: User;
-      callId: string;
-      chat: Chat;
-    };
+type CallType = "incoming" | "outgoing" | "idle";
+type CallState = {
+  state: "incoming" | "outgoing" | "ongoing";
+  caller: User;
+  chat: Chat;
+  callId: string;
+};
 
 type CallContext = {
-  callState: CallState;
+  callType?: CallType;
   call: (chatId: string) => void;
+  callState?: CallState;
 };
+
 const [Context, useCall] = createContext<CallContext>();
 
-function useCallState() {
-  const [callState, setCallState] = useState<CallState>({ state: "idle" });
+export function CallProvider({ children }: PropsWithChildren) {
+  const [callType, setCallType] = useState<CallType>("idle");
   const { socket } = useSocket();
-  const { user } = useUser();
-  const [callAccepted, setCallAccepted] = useState(false);
+  const [peer, _setPeer] = useState<Peer>();
+  const [peerId, setPeerId] = useState<string>();
+  const [answered, setAnswered] = useState(false);
+  const [callState, setCallState] = useState<CallState>();
   const [mediaConnection, setMediaConnection] = useState<MediaConnection>();
-  const [peer, setPeer] = useState<Peer>();
-  const { stream } = useMediaStream();
 
-  const callInitiate = useCallback(
+  const canAnswer = callType == "incoming" && !answered && peerId;
+  function setPeer(newPeer: Peer) {
+    if (peer) peer.destroy();
+    _setPeer(newPeer);
+  }
+
+  const onCallOutgoing = useCallback(
     ({
-      initiator,
-      chat,
       callId,
+      caller,
+      chat,
     }: {
-      initiator: User;
       callId: string;
+      caller: User;
       chat: Chat;
     }) => {
-      if (!user) return;
-      if (initiator.id == user.id) {
-        setCallState({ state: "outgoing", initiator, chat, callId });
-      } else {
-        setCallState({ state: "incoming", initiator, callId, chat });
-      }
+      setCallType("outgoing");
+      setCallState({ chat, caller, callId, state: "outgoing" });
     },
-    [user, setCallState],
+    [setCallType, setCallState],
   );
 
-  const onCallAccept = useCallback(
-    ({ callId }: { callId: string }) => {
-      if (callState.state == "idle" || callState.state == "ongoing") {
-        return;
-      }
-      if (callState.callId != callId) return;
-      console.log("Call is accepted");
-      setCallAccepted(true);
-
-      setCallState((prev) => {
-        if (prev.state == "incoming" || prev.state == "outgoing") {
-          return { ...prev, state: "ongoing" };
-        }
-        return prev;
-      });
+  const onCallIncoming = useCallback(
+    ({
+      callId,
+      caller,
+      chat,
+    }: {
+      callId: string;
+      caller: User;
+      chat: Chat;
+    }) => {
+      setPeer(new Peer());
+      setCallType("incoming");
+      setCallState({ chat, caller, callId, state: "incoming" });
     },
-    [callState],
+    [setCallType, setCallState],
   );
 
-  const onReceiverReady = useCallback(
-    ({ receiverPeerId }: { receiverPeerId: string }) => {
-      if (!peer || !user) return;
-      console.log("Receiver ready");
-      if (callState.state == "idle") return;
-      if (callState.initiator.id == user.id) {
-        const call = peer.call(receiverPeerId, stream!);
-        call.on("stream", (stream) => {
-          console.log("we are live in call");
-        });
-        call.on("error", (error) => {
-          console.log(error);
-        });
-        console.log("Starting a call");
+  const onCallAnswered = useCallback(
+    ({ peerId, callId }: { peerId: string; callId: string }) => {
+      if (callType == "outgoing" && peer && callId == callState?.callId) {
+        const stream = new MediaStream();
+        const mc = peer.call(peerId, stream);
+        console.log("Calling user");
+        setMediaConnection(mc);
+      } else if (callType == "incoming") {
+        setAnswered(true);
       }
     },
-    [callState, peer, user, stream],
+    [peer, callType, callState],
   );
-
   useEffect(() => {
-    socket.on("call:initiate", callInitiate);
+    socket.on("call:outgoing", onCallOutgoing);
+    socket.on("call:incoming", onCallIncoming);
+    socket.on("call:answered", onCallAnswered);
     return () => {
-      socket.off("call:initiate", callInitiate);
+      socket.off("call:outgoing", onCallOutgoing);
+      socket.off("call:incoming", onCallIncoming);
+      socket.off("call:answered", onCallAnswered);
     };
-  }, [callInitiate]);
-
-  useEffect(() => {
-    socket.on("call:accepted", onCallAccept);
-    return () => {
-      socket.off("call:accepted", onCallAccept);
-    };
-  }, [onCallAccept]);
-
-  useEffect(() => {
-    socket.on("call:receiverReady", onReceiverReady);
-    return () => {
-      socket.off("call:receiverReady", onReceiverReady);
-    };
-  }, [onReceiverReady]);
-
-  useEffect(() => {
-    if (!callAccepted || peer) return;
-    const newPeer = new Peer();
-    setPeer(newPeer);
-    console.log("Alert socket before", callState);
-    if (callState.state == "idle") return;
-    newPeer.on("open", (peerId: string) => {
-      socket.open();
-      console.log("Alert socket");
-      socket.emit("call:peerReady", { peerId, callId: callState.callId });
-    });
-  }, [callAccepted, callState]);
+  }, [onCallIncoming, onCallOutgoing, onCallAnswered]);
 
   useEffect(() => {
     if (!peer) return;
-    peer.on("call", (call) => {
-      call.on("stream", (stream) => {
-        console.log("we are live in call");
-      });
-      call.on("error", (error) => {
-        console.log(error);
-      });
-      call.answer(stream!);
-      console.log("Answering call");
+    peer.on("open", (peerId: string) => {
+      setPeerId(peerId);
     });
-  }, [callState, peer, stream]);
+    peer.on("call", (call) => {
+      if (callType == "incoming") {
+        const stream = new MediaStream();
+        call.answer(stream);
+        console.log("Call received and answered");
+        setMediaConnection(call);
+      }
+    });
+    peer.on("connection", (data) => {
+      console.log(data);
+    });
+  }, [peer, callType]);
 
-  return { callState, callAccepted };
-}
-
-export function CallProvider({ children }: PropsWithChildren) {
-  const { callState, callAccepted } = useCallState();
-  const { socket } = useSocket();
-  // This is a call object
+  useEffect(() => {
+    if (!mediaConnection) return;
+    mediaConnection.on("stream", (stream) => {
+      console.log("call is live");
+    });
+  }, [mediaConnection]);
 
   const call = useCallback((chatId: string) => {
-    socket.connect();
-    socket.emit("call:initiate", { chatId });
-    console.log("Call");
+    setPeer(new Peer());
+    socket.emit("call:initiate", {
+      chatId,
+    });
   }, []);
 
-  const acceptCall = useCallback(() => {
-    socket.connect();
-    if (callState.state != "incoming") return;
-    socket.emit("call:accept", { callId: callState.callId });
-  }, [callState.state]);
+  const answerCall = useCallback(() => {
+    if (!callState || callState.state != "incoming" || !canAnswer) return;
+    console.log("Call is answered");
+    socket.emit("call:answered", { callId: callState.callId, peerId });
+  }, [callState, canAnswer, peerId]);
 
   const rejectCall = useCallback(() => {
-    socket.connect();
-    if (callState.state != "incoming") return;
-    socket.emit("call:reject", { callId: callState.callId });
-  }, [callState.state]);
-
+    if (!callState || callState.state != "incoming" || !canAnswer) return;
+    socket.emit("call:rejected", { callId: callState.callId });
+  }, [callState, canAnswer]);
   return (
-    <Context.Provider value={{ callState, call }}>
+    <Context.Provider
+      value={{
+        callType,
+        call,
+        callState,
+      }}
+    >
       {children}
-      {callState.state == "incoming" && (
+      {callState?.state == "incoming" && canAnswer && (
         <IncomingCallDialog
-          from={callState.initiator}
-          acceptCall={acceptCall}
+          caller={callState.caller}
+          acceptCall={answerCall}
           rejectCall={rejectCall}
         />
       )}
