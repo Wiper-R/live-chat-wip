@@ -1,7 +1,15 @@
 import { Socket } from "socket.io";
 import axios, { AxiosInstance } from "axios";
 import { UserManager } from "./user-manager";
-import { Chat, User } from "@repo/api-types";
+import {
+  CallInitiateResponse,
+  Chat,
+  User,
+  CallAnswerRequest,
+  CallAnswerResponse,
+  CallConnectedResponse,
+  CallConnectedRequest,
+} from "@repo/api-types";
 import { Call } from "./call";
 import { CallManager } from "./call-manager";
 
@@ -31,47 +39,61 @@ export class SocketUser {
   }
 
   registerCallListeners() {
-    this.socket.on("call:initiate", async ({ chatId }: { chatId: string }) => {
-      // TODO: Implement error detection
-      const res = await this.apiClient.get(`/users/@me/chats/${chatId}`);
-      const chat: Chat = res.data;
-      const recipient = Call.getRecipient(chat, this.user);
-      if (!recipient) {
-        console.log("Recipient is not connected");
-        // this.socket.emit("call:initiate", {
-        //   chatId,
-        //   reason: "User is offline",
-        //   status: "failed",
-        // });
-        return;
-      }
-      const call = new Call(this.user, recipient, chat);
-      CallManager.addCall(call);
-      CallManager.broadcast(call.id, "caller", "call:outgoing", {
-        callId: call.id,
-        caller: call.caller,
-        chat,
-      });
-      CallManager.broadcast(call.id, "recipient", "call:incoming", {
-        callId: call.id,
-        caller: call.caller,
-        chat,
-      });
-    });
-
     this.socket.on(
-      "call:answered",
-      async ({ callId, peerId }: { callId: string; peerId: string }) => {
-        const call = CallManager.getCall(callId);
-        if (!call) return;
-        if (call.recipient.id != this.user.id) return;
-        console.log("Call answered, emitting");
-        CallManager.broadcast(call.id, "all", "call:answered", {
-          peerId,
-          callId,
-        });
+      "call:start",
+      async ({
+        offer,
+        chatId,
+      }: {
+        offer: RTCSessionDescriptionInit;
+        chatId: string;
+      }) => {
+        const res = await this.apiClient.get(`/users/@me/chats/${chatId}`);
+        const chat: Chat = res.data;
+        const recipient = Call.getRecipient(chat, this.user);
+        if (!recipient) {
+          UserManager.broadcast(this.user.id, "call:failed", {
+            message: "Recipient is offline",
+          });
+          return;
+        }
+        const call = new Call(this.user, recipient, chat);
+        const response: CallInitiateResponse = {
+          chat,
+          offer,
+          callId: call.id,
+          caller: call.caller,
+        };
+        CallManager.addCall(call);
+        CallManager.broadcast(call.id, "all", "call:initiate", response);
       },
     );
+
+    this.socket.on(
+      "call:answer:accepted",
+      ({ callId, answer }: CallAnswerRequest) => {
+        const call = CallManager.getCall(callId);
+        if (!call) return;
+        // TODO: Return a error to accepter that call is already dropped
+        const response: CallAnswerResponse = {
+          answer,
+          callId,
+        };
+        CallManager.broadcast(callId, "caller", "call:answer", response);
+      },
+    );
+
+    this.socket.on("call:connected", ({ callId }: CallConnectedRequest) => {
+      const call = CallManager.getCall(callId);
+      if (!call) return;
+      // TODO: Return a error to accepter that call is already dropped
+      const response: CallConnectedResponse = {
+        callId,
+        chat: call.chat,
+        caller: call.caller,
+      };
+      CallManager.broadcast(callId, "all", "call:connected", response);
+    });
   }
 
   registerListeners() {

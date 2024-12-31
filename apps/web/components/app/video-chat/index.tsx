@@ -1,26 +1,26 @@
 import { Button } from "@/components/ui/button";
+import { useCall } from "@/contexts/app/call-provider";
+import { useMediaStream } from "@/hooks/use-media-stream";
 import { MicIcon, PhoneOff, VideoIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-type VideoChatProps = {
-  localStream: MediaStream;
-  remoteStream: MediaStream;
-};
-
-export function VideoChatComponent({
-  localStream,
-  remoteStream,
-}: VideoChatProps) {
+export function VideoChatComponent() {
   const remoteVideoRef = useRef<HTMLVideoElement>(null!);
   const localVideoRef = useRef<HTMLVideoElement>(null!);
+  const { remoteStream, localStream, setLocalStream, callType } = useCall();
+
+  useEffect(() => {
+    remoteVideoRef.current.srcObject = remoteStream || null;
+    localVideoRef.current.srcObject = localStream || null;
+    console.log(remoteStream?.getTracks());
+  }, [remoteStream, localStream]);
 
   return (
     <div className="inset-0 bg-background absolute overflow-hidden">
       <video
         ref={remoteVideoRef}
         autoPlay
-        muted
         className="-scale-x-100 w-full h-full object-contain"
         disablePictureInPicture
       />
@@ -49,13 +49,11 @@ export function VideoChatComponent({
   );
 }
 
-export function VideoChat(props: VideoChatProps) {
+export function VideoChat() {
   const [videoPortal, setVideoPortal] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setVideoPortal(document.getElementById("call-portal"));
   }, []);
 
-  return videoPortal
-    ? createPortal(<VideoChatComponent {...props} />, videoPortal)
-    : null;
+  return videoPortal ? createPortal(<VideoChatComponent />, videoPortal) : null;
 }

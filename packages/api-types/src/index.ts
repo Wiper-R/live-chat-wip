@@ -17,3 +17,30 @@ export type Message = {
   chatId: string;
   Chat: Chat;
 };
+
+export type CallInitiateResponse = {
+  offer: RTCSessionDescriptionInit;
+  callId: string;
+  caller: User;
+  chat: Chat;
+};
+
+export type CallAnswerRequest = {
+  answer: RTCSessionDescriptionInit;
+  callId: string;
+};
+
+export type CallAnswerResponse = {
+  answer: RTCSessionDescriptionInit;
+  callId: string;
+};
+
+export type CallConnectedRequest = {
+  callId: string;
+};
+
+export type CallConnectedResponse = {
+  callId: string;
+  chat: Chat;
+  caller: User;
+};

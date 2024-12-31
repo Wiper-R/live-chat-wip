@@ -1,15 +1,19 @@
 import { createContext } from "@/lib/utils";
+import { PropsWithChildren, useCallback, useEffect, useState } from "react";
 import {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+  CallAnswerRequest,
+  CallAnswerResponse,
+  CallConnectedResponse,
+  CallInitiateResponse,
+  Chat,
+  User,
+} from "@repo/api-types";
 import { useSocket } from "./socket-provider";
-import Peer, { MediaConnection } from "peerjs";
+import { Socket } from "socket.io-client";
+import { useUser } from "./user-provider";
 import { IncomingCallDialog } from "@/components/app/video-chat/incoming-call-dialog";
-import { Chat, User } from "@repo/api-types";
+import { VideoChat } from "@/components/app/video-chat";
+import { useMediaStream } from "@/hooks/use-media-stream";
 type CallType = "incoming" | "outgoing" | "idle";
 type CallState = {
   state: "incoming" | "outgoing" | "ongoing";
@@ -22,140 +26,178 @@ type CallContext = {
   callType?: CallType;
   call: (chatId: string) => void;
   callState?: CallState;
+  peer?: RTCPeerConnection;
+  localStream?: MediaStream;
+  setLocalStream: (stream?: MediaStream) => void;
+  remoteStream?: MediaStream;
 };
 
 const [Context, useCall] = createContext<CallContext>();
 
 export function CallProvider({ children }: PropsWithChildren) {
-  const [callType, setCallType] = useState<CallType>("idle");
+  const [peerConnection, setPeerConnection] = useState<RTCPeerConnection>();
   const { socket } = useSocket();
-  const [peer, _setPeer] = useState<Peer>();
-  const [peerId, setPeerId] = useState<string>();
-  const [answered, setAnswered] = useState(false);
+  const [callType, setCallType] = useState<CallType>();
   const [callState, setCallState] = useState<CallState>();
-  const [mediaConnection, setMediaConnection] = useState<MediaConnection>();
-
-  const canAnswer = callType == "incoming" && !answered && peerId;
-  function setPeer(newPeer: Peer) {
-    if (peer) peer.destroy();
-    _setPeer(newPeer);
-  }
-
-  const onCallOutgoing = useCallback(
-    ({
-      callId,
-      caller,
-      chat,
-    }: {
-      callId: string;
-      caller: User;
-      chat: Chat;
-    }) => {
-      setCallType("outgoing");
-      setCallState({ chat, caller, callId, state: "outgoing" });
-    },
-    [setCallType, setCallState],
-  );
-
-  const onCallIncoming = useCallback(
-    ({
-      callId,
-      caller,
-      chat,
-    }: {
-      callId: string;
-      caller: User;
-      chat: Chat;
-    }) => {
-      setPeer(new Peer());
-      setCallType("incoming");
-      setCallState({ chat, caller, callId, state: "incoming" });
-    },
-    [setCallType, setCallState],
-  );
-
-  const onCallAnswered = useCallback(
-    ({ peerId, callId }: { peerId: string; callId: string }) => {
-      if (callType == "outgoing" && peer && callId == callState?.callId) {
-        const stream = new MediaStream();
-        const mc = peer.call(peerId, stream);
-        console.log("Calling user");
-        setMediaConnection(mc);
-      } else if (callType == "incoming") {
-        setAnswered(true);
-      }
-    },
-    [peer, callType, callState],
-  );
+  const { user } = useUser();
+  const [offer, setOffer] = useState<RTCSessionDescriptionInit>();
+  const [localStream, setLocalStream] = useState<MediaStream>();
+  const [remoteStream, setRemoteStream] = useState<MediaStream>();
+  const { stream } = useMediaStream();
   useEffect(() => {
-    socket.on("call:outgoing", onCallOutgoing);
-    socket.on("call:incoming", onCallIncoming);
-    socket.on("call:answered", onCallAnswered);
-    return () => {
-      socket.off("call:outgoing", onCallOutgoing);
-      socket.off("call:incoming", onCallIncoming);
-      socket.off("call:answered", onCallAnswered);
+    if (stream) setLocalStream(stream);
+  }, [stream]);
+
+  const initializePeer = useCallback(() => {
+    if (peerConnection) {
+      peerConnection.close();
+    }
+    const newPeerConnection = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun2.1.google.com:19302",
+        },
+      ],
+    });
+    localStream
+      ?.getTracks()
+      .forEach((track) => newPeerConnection.addTrack(track, localStream!));
+    newPeerConnection.oniceconnectionstatechange = function () {
+      console.log("ICE state: ", newPeerConnection.iceConnectionState);
     };
-  }, [onCallIncoming, onCallOutgoing, onCallAnswered]);
+    setPeerConnection(newPeerConnection);
+
+    return newPeerConnection;
+  }, [peerConnection, localStream]);
+
+  const call = useCallback(
+    async (chatId: string) => {
+      const peer = initializePeer();
+      const offer = await peer.createOffer({
+        offerToReceiveVideo: true,
+        offerToReceiveAudio: true,
+      });
+      await peer.setLocalDescription(new RTCSessionDescription(offer));
+      socket.emit("call:start", { offer, chatId });
+    },
+    [socket, initializePeer, setOffer],
+  );
+
+  const onCallInitiate = useCallback(
+    ({ offer, callId, chat, caller }: CallInitiateResponse) => {
+      if (callType) return;
+      const state: CallState["state"] =
+        caller.id == user?.id ? "outgoing" : "incoming";
+      setCallType(state);
+      setOffer(offer);
+      setCallState({ caller, state, callId, chat });
+    },
+    [callType, user, setCallState, setOffer, setCallType],
+  );
+
+  const onCallAnswer = useCallback(
+    async ({ answer, callId }: CallAnswerResponse) => {
+      if (!peerConnection || callState?.callId != callId) return;
+      await peerConnection.setRemoteDescription(answer);
+      socket.emit("call:connected", { callId });
+      console.log("Answer", answer);
+    },
+    [peerConnection, callState],
+  );
+
+  const onCallConnected = useCallback(
+    ({ callId, caller, chat }: CallConnectedResponse) => {
+      setCallState({ state: "ongoing", callId, caller, chat });
+    },
+    [setCallState],
+  );
+
+  const acceptCall = useCallback(async () => {
+    if (!callState || callState.state != "incoming" || !offer) {
+      return;
+    }
+    const peer = initializePeer();
+    await peer.setRemoteDescription(offer);
+    console.log("Offer", offer);
+    const answer = await peer.createAnswer();
+    await peer.setLocalDescription(new RTCSessionDescription(answer));
+    const request: CallAnswerRequest = {
+      answer,
+      callId: callState.callId,
+    };
+    socket.emit("call:answer:accepted", request);
+  }, [offer, callState, initializePeer, socket]);
 
   useEffect(() => {
-    if (!peer) return;
-    peer.on("open", (peerId: string) => {
-      setPeerId(peerId);
-    });
-    peer.on("call", (call) => {
-      if (callType == "incoming") {
-        const stream = new MediaStream();
-        call.answer(stream);
-        console.log("Call received and answered");
-        setMediaConnection(call);
-      }
-    });
-    peer.on("connection", (data) => {
-      console.log(data);
-    });
-  }, [peer, callType]);
+    socket.on("call:initiate", onCallInitiate);
+    return () => {
+      socket.off("call:initiate", onCallInitiate);
+    };
+  }, [socket, onCallInitiate]);
 
   useEffect(() => {
-    if (!mediaConnection) return;
-    mediaConnection.on("stream", (stream) => {
-      console.log("call is live");
-    });
-  }, [mediaConnection]);
+    socket.on("call:answer", onCallAnswer);
+    return () => {
+      socket.off("call:answer", onCallAnswer);
+    };
+  }, [socket, onCallAnswer]);
 
-  const call = useCallback((chatId: string) => {
-    setPeer(new Peer());
-    socket.emit("call:initiate", {
-      chatId,
-    });
-  }, []);
+  useEffect(() => {
+    socket.on("call:connected", onCallConnected);
+    return () => {
+      socket.off("call:connected", onCallConnected);
+    };
+  }, [onCallConnected]);
 
-  const answerCall = useCallback(() => {
-    if (!callState || callState.state != "incoming" || !canAnswer) return;
-    console.log("Call is answered");
-    socket.emit("call:answered", { callId: callState.callId, peerId });
-  }, [callState, canAnswer, peerId]);
+  useEffect(() => {
+    console.log("Before return");
+    console.log(peerConnection, localStream);
+    if (!peerConnection || !localStream) return;
+    console.log("After return");
+    // localStream.getTracks().forEach((track) => {
+    //   console.log(track);
+    //   peerConnection.addTrack(track, localStream);
+    // });
+  }, [localStream, peerConnection]);
 
-  const rejectCall = useCallback(() => {
-    if (!callState || callState.state != "incoming" || !canAnswer) return;
-    socket.emit("call:rejected", { callId: callState.callId });
-  }, [callState, canAnswer]);
+  useEffect(() => {
+    if (!peerConnection) return;
+
+    // Ensure that the ontrack handler is correctly set
+    const handleTrack = (event: RTCTrackEvent) => {
+      console.log("Received track", event);
+      setRemoteStream(event.streams[0]);
+    };
+
+    peerConnection.addEventListener("track", handleTrack);
+
+    // Cleanup event listener when peerConnection changes
+    return () => {
+      peerConnection.removeEventListener("track", handleTrack);
+    };
+  }, [peerConnection]);
+
   return (
     <Context.Provider
       value={{
-        callType,
         call,
+        callType,
         callState,
+        peer: peerConnection,
+        localStream,
+        setLocalStream,
+        remoteStream,
       }}
     >
       {children}
-      {callState?.state == "incoming" && canAnswer && (
+      {callState?.state == "incoming" && (
         <IncomingCallDialog
           caller={callState.caller}
-          acceptCall={answerCall}
-          rejectCall={rejectCall}
+          rejectCall={() => {}}
+          acceptCall={acceptCall}
         />
       )}
+      {callState?.state == "ongoing" && <VideoChat />}
     </Context.Provider>
   );
 }
