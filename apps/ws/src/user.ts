@@ -11,7 +11,7 @@ import {
   CallConnectedRequest,
 } from "@repo/api-types";
 import { Call } from "./call";
-import { CallManager } from "./call-manager";
+import { CallManager, CallManagerBroadcastType } from "./call-manager";
 
 export class SocketUser {
   socket: Socket;
@@ -39,49 +39,35 @@ export class SocketUser {
   }
 
   registerCallListeners() {
-    this.socket.on(
-      "call:start",
-      async ({
-        offer,
-        chatId,
-      }: {
-        offer: RTCSessionDescriptionInit;
-        chatId: string;
-      }) => {
-        const res = await this.apiClient.get(`/users/@me/chats/${chatId}`);
-        const chat: Chat = res.data;
-        const recipient = Call.getRecipient(chat, this.user);
-        if (!recipient) {
-          UserManager.broadcast(this.user.id, "call:failed", {
-            message: "Recipient is offline",
-          });
-          return;
-        }
-        const call = new Call(this.user, recipient, chat);
-        const response: CallInitiateResponse = {
-          chat,
-          offer,
-          callId: call.id,
-          caller: call.caller,
-        };
-        CallManager.addCall(call);
-        CallManager.broadcast(call.id, "all", "call:initiate", response);
-      },
-    );
+    this.socket.on("call:start", async ({ chatId }: { chatId: string }) => {
+      const res = await this.apiClient.get(`/users/@me/chats/${chatId}`);
+      const chat: Chat = res.data;
+      const recipient = Call.getRecipient(chat, this.user);
+      if (!recipient) {
+        UserManager.broadcast(this.user.id, "call:failed", {
+          message: "Recipient is offline",
+        });
+        return;
+      }
+      const call = new Call(this.user, recipient, chat);
+      const response: CallInitiateResponse = {
+        chat,
+        callId: call.id,
+        caller: call.caller,
+      };
+      CallManager.addCall(call);
+      CallManager.broadcast(call.id, "all", "call:initiate", response);
+    });
 
-    this.socket.on(
-      "call:answer:accepted",
-      ({ callId, answer }: CallAnswerRequest) => {
-        const call = CallManager.getCall(callId);
-        if (!call) return;
-        // TODO: Return a error to accepter that call is already dropped
-        const response: CallAnswerResponse = {
-          answer,
-          callId,
-        };
-        CallManager.broadcast(callId, "caller", "call:answer", response);
-      },
-    );
+    this.socket.on("call:answer:accepted", ({ callId }: CallAnswerRequest) => {
+      const call = CallManager.getCall(callId);
+      if (!call) return;
+      // TODO: Return a error to accepter that call is already dropped
+      const response: CallAnswerResponse = {
+        callId,
+      };
+      CallManager.broadcast(callId, "caller", "call:answer", response);
+    });
 
     this.socket.on("call:connected", ({ callId }: CallConnectedRequest) => {
       const call = CallManager.getCall(callId);
@@ -94,6 +80,48 @@ export class SocketUser {
       };
       CallManager.broadcast(callId, "all", "call:connected", response);
     });
+
+    this.socket.on(
+      "call:negotiationneeded",
+      ({
+        description,
+        callId,
+      }: {
+        description: RTCSessionDescriptionInit;
+        callId: string;
+      }) => {
+        if (!description || !callId) return;
+        console.log("Negotiation needed");
+        CallManager.broadCastAlternate(
+          callId,
+          this.user.id,
+          "call:negotiationneeded",
+          { description },
+        );
+      },
+    );
+
+    this.socket.on(
+      "call:icecandidate",
+      ({
+        candidate,
+        callId,
+      }: {
+        candidate: RTCIceCandidate;
+        callId: string;
+      }) => {
+        if (!candidate) return;
+        CallManager.broadCastAlternate(
+          callId,
+          this.user.id,
+          "call:icecandidate",
+          {
+            callId,
+            candidate,
+          },
+        );
+      },
+    );
   }
 
   registerListeners() {

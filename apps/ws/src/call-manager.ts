@@ -1,6 +1,5 @@
 import { User } from "@repo/api-types";
 import { Call } from "./call";
-import { SocketUser } from "./user";
 import { UserManager } from "./user-manager";
 
 export type CallManagerBroadcastType = "caller" | "recipient" | "all";
@@ -26,6 +25,24 @@ export class CallManager {
 
   static removeCall(callId: string) {
     return this.getInstance().calls.delete(callId);
+  }
+
+  static broadCastAlternate(
+    callId: string,
+    senderId: string,
+    ev: string,
+    message: Record<string, any>,
+    autoEnd: boolean = true,
+  ) {
+    const call = CallManager.getCall(callId);
+    if (!call) return;
+    var type: CallManagerBroadcastType;
+    if (call.caller.id == senderId) {
+      type = "recipient";
+    } else {
+      type = "caller";
+    }
+    this.broadcast(callId, type, ev, message, autoEnd);
   }
 
   static broadcast(

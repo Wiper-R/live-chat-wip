@@ -19,19 +19,16 @@ export type Message = {
 };
 
 export type CallInitiateResponse = {
-  offer: RTCSessionDescriptionInit;
   callId: string;
   caller: User;
   chat: Chat;
 };
 
 export type CallAnswerRequest = {
-  answer: RTCSessionDescriptionInit;
   callId: string;
 };
 
 export type CallAnswerResponse = {
-  answer: RTCSessionDescriptionInit;
   callId: string;
 };
 
