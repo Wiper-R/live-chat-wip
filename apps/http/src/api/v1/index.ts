@@ -54,13 +54,13 @@ router.post("/signin", async (req, res) => {
       {
         userId: user.id,
       },
-      env.JWT_SECRET
+      env.JWT_SECRET,
     );
     res.cookie("token", token, {
       httpOnly: true,
       expires: moment().add({ hours: 24 }).toDate(),
     });
-    res.json({});
+    res.json(user);
   } catch (e) {
     res.status(500).json({ message: "Internal server error" });
   }

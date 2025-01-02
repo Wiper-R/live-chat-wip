@@ -4,6 +4,7 @@ import { useUser } from "@/contexts/app/user-provider";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 import { ScrollArea } from "../ui/scroll-area";
+import { useEffect, useRef } from "react";
 
 function Message({
   content,
@@ -36,17 +37,24 @@ function Message({
 
 export function Chats() {
   const { messages } = useMessagesContext();
+  const divRef = useRef<HTMLDivElement>(null!);
+  useEffect(() => {
+    divRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
   return (
-    <ScrollArea className="flex flex-col overflow-auto flex-grow w-full p-8 gap-2">
-      {messages.map((message) => (
-        <div key={message.id} className="w-full flex">
-          <Message
-            content={message.content}
-            createdAt={message.createdAt}
-            senderId={message.senderId}
-          />
-        </div>
-      ))}
+    <ScrollArea>
+      <div className="flex flex-col overflow-auto flex-grow w-full p-8 gap-2">
+        {messages.map((message) => (
+          <div key={message.id} className="w-full flex">
+            <Message
+              content={message.content}
+              createdAt={message.createdAt}
+              senderId={message.senderId}
+            />
+          </div>
+        ))}
+      </div>
+      <div ref={divRef} />
     </ScrollArea>
   );
 }

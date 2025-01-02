@@ -5,12 +5,12 @@ import { useChatsContext } from "@/contexts/app/chats-provider";
 import Link from "next/link";
 import { useUser } from "@/contexts/app/user-provider";
 import { ScrollArea } from "../ui/scroll-area";
+import { UserUI } from "./user";
 
 function SideToolbox() {
+  const { user } = useUser();
   return (
-    <div className="mt-auto w-full p-4 border-t">
-      <div className="w-12 h-12 rounded-full bg-gray-600" />
-    </div>
+    <div className="mt-auto border-t p-4">{user && <UserUI {...user} />}</div>
   );
 }
 
@@ -32,12 +32,11 @@ function ChatList() {
         var chatUser = chat.Recipients.find((u) => u.id != user!.id)!;
         return (
           <Link
-            className="px-5 py-2 space-x-3 flex items-center"
             key={chat.id}
             href={`/app/chats/${chat.id}`}
+            className="p-4 block"
           >
-            <div className="w-10 h-10 rounded-full bg-gray-600" />
-            <span>{chatUser.name}</span>
+            <UserUI {...chatUser} />
           </Link>
         );
       })}

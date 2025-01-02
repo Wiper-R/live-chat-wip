@@ -6,11 +6,13 @@ import queryKeyFactory, { chats } from "@/lib/query-key-factory";
 import { apiClient } from "@/lib/api-client";
 import { useChatsContext } from "./chats-provider";
 import { useSocket } from "./socket-provider";
-import { Message } from "@repo/api-types";
+import { Chat, Message } from "@repo/api-types";
+import { useRouter } from "next/navigation";
 
 type MessagesContext = {
   messages: Message[];
-  chatId: string;
+  selectedChatId: string;
+  selectedChat?: Chat;
 };
 
 const [Context, useMessagesContext] = createContext<MessagesContext>();
@@ -20,23 +22,26 @@ type MessageProviderProps = PropsWithChildren & {
 };
 
 export function MessagesProvider({ chatId, children }: MessageProviderProps) {
-  const { data } = useQuery({
+  const { data: messages } = useQuery({
     async queryFn() {
       const res = await apiClient.get(`/users/@me/chats/${chatId}/messages`);
       return res.data;
     },
     queryKey: chats.messages(chatId),
   });
-  const { setSelectedChatId } = useChatsContext();
+  const router = useRouter();
+  const { data: selectedChat } = useQuery({
+    async queryFn() {
+      const res = await apiClient.get(`/users/@me/chats/${chatId}`);
+      return res.data as Chat;
+    },
+    queryKey: chats.byId(chatId),
+    onError() {
+      router.push("/app");
+    },
+  });
   const queryClient = useQueryClient();
   const { socket } = useSocket();
-  useEffect(() => {
-    setSelectedChatId(chatId);
-
-    return () => {
-      setSelectedChatId("");
-    };
-  }, []);
 
   function handleMessageCreate(message: Message) {
     queryClient.setQueryData(
@@ -56,7 +61,9 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
   }, []);
 
   return (
-    <Context.Provider value={{ messages: data || [], chatId }}>
+    <Context.Provider
+      value={{ messages: messages || [], selectedChatId: chatId, selectedChat }}
+    >
       {children}
     </Context.Provider>
   );

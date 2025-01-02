@@ -8,7 +8,7 @@ import { apiClient } from "@/lib/api-client";
 
 function ChatInput() {
   const [content, setContent] = useState<string>("");
-  const { chatId } = useMessagesContext();
+  const { selectedChatId: chatId } = useMessagesContext();
 
   async function createMessage() {
     await apiClient.post(`/users/@me/chats/${chatId}/messages`, { content });
