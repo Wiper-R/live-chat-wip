@@ -13,16 +13,12 @@ const [Context, useUser] = createContext<{
 }>();
 
 export function UserProvider({ children }: PropsWithChildren) {
-  const router = useRouter();
   const { data: user, isLoading } = useQuery({
     async queryFn() {
       const res = await apiClient.get("/users/@me");
       return res.data as User;
     },
     queryKey: queryFactory.users.current(),
-    onError() {
-      router.push("/signin");
-    },
     retry: false,
   });
   return (

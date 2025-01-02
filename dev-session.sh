@@ -14,7 +14,7 @@ tmux send-keys -t live-chat:lazygit 'lazygit' Enter
 # Start Prisma Studio
 tmux new-window -t live-chat -n studio
 tmux send-keys -t live-chat:studio 'cd ./shared' Enter
-tmux send-keys -t live-chat:studio 'pnpm exec prisma studio' Enter
+tmux send-keys -t live-chat:studio 'pnpm exec turbo db:studio' Enter
 
 # Switch window to lazygit
 tmux select-window -t live-chat:lazygit

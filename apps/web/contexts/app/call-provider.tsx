@@ -1,6 +1,12 @@
 "use client";
 import { createContext } from "@/lib/utils";
-import { PropsWithChildren, useCallback, useEffect, useState } from "react";
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   CallAnswerRequest,
   CallAnswerResponse,
@@ -13,6 +19,7 @@ import { useSocket } from "./socket-provider";
 import { useUser } from "./user-provider";
 import { IncomingCallDialog } from "@/components/app/video-chat/incoming-call-dialog";
 import { VideoChat } from "@/components/app/video-chat";
+import { OutgoingCallDialog } from "@/components/app/video-chat/outgoing-call-dialog";
 type CallType = "incoming" | "outgoing" | "idle";
 type CallState = {
   state: "incoming" | "outgoing" | "ongoing";
@@ -34,6 +41,21 @@ export function CallProvider({ children }: PropsWithChildren) {
   const [callType, setCallType] = useState<CallType>();
   const [callState, setCallState] = useState<CallState>();
   const { user } = useUser();
+  const outgoingCallAudio = useRef(new Audio("/sounds/outgoing-call.wav"));
+
+  // Play sound based on state
+  useEffect(() => {
+    if (callType == "outgoing" && callState?.state == "outgoing") {
+      outgoingCallAudio.current.play();
+    } else {
+      outgoingCallAudio.current.pause();
+      outgoingCallAudio.current.currentTime = 0;
+    }
+    return () => {
+      outgoingCallAudio.current.pause();
+      outgoingCallAudio.current.currentTime = 0;
+    };
+  }, [callType, callState]);
 
   const call = useCallback(
     async (chatId: string) => {
@@ -104,6 +126,9 @@ export function CallProvider({ children }: PropsWithChildren) {
           rejectCall={() => {}}
           acceptCall={acceptCall}
         />
+      )}
+      {callState?.state == "outgoing" && (
+        <OutgoingCallDialog callee={callState.caller} hangUp={() => {}} />
       )}
       {callState?.state == "ongoing" && <VideoChat />}
     </Context.Provider>

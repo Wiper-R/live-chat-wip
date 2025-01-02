@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["omitApi"]
@@ -37,8 +31,11 @@ model Message {
   chatId    String
   senderId  String
   createdAt DateTime @default(now())
+  seen      Boolean  @default(false)
   Sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   Chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, seen])
 }
 
 model Relationship {
@@ -48,9 +45,12 @@ model Relationship {
   status      RelationshipStatus @default(pending)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @default(now())
+  seen        Boolean            @default(false)
   Sender      User               @relation(name: "OutgoingRelationship", fields: [senderId], references: [id], onDelete: Cascade)
   Recipient   User               @relation(name: "IncomingRelationship", fields: [recipientId], references: [id], onDelete: Cascade)
   userIds     String[]           @unique
+
+  @@index([recipientId, seen])
 }
 
 enum RelationshipStatus {

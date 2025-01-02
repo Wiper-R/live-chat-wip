@@ -9,9 +9,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useMutation, useQuery } from "react-query";
-import axios from "axios";
 import {
   createContext,
+  FormEvent,
   PropsWithChildren,
   useContext,
   useEffect,
@@ -24,34 +24,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Loader } from "../loader";
-import * as queryFactory from "@/lib/query-key-factory";
+import queryKeyFactory, * as queryFactory from "@/lib/query-key-factory";
 import { apiClient } from "@/lib/api-client";
 import { useUser } from "@/contexts/app/user-provider";
-
-type User = { name?: string; email: string; username: string; id: number };
+import { UserUI } from "./user";
+import { Relationship, User } from "@repo/api-types";
+import { FieldValues, Form, useForm } from "react-hook-form";
 
 // TODO: Add tooltips to buttons
-
-function UserComponent({
-  name,
-  username,
-  avatar,
-}: {
-  name: string;
-  username: string;
-  avatar: string;
-}) {
-  // TODO: Use avtar
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-12 h-12 rounded-full bg-gray-600" />
-      <div>
-        <div>{name}</div>
-        <div className="text-sm text-gray-500">@{username}</div>
-      </div>
-    </div>
-  );
-}
 
 function Entry({ children }: PropsWithChildren) {
   return (
@@ -69,7 +49,7 @@ type FriendDialogContext = {
 };
 
 const FriendsDialogContext = createContext<FriendDialogContext | undefined>(
-  undefined
+  undefined,
 );
 
 export function FriendsDialog() {
@@ -79,12 +59,28 @@ export function FriendsDialog() {
     friends: FriendList,
   };
   const [open, setOpen] = useState(false);
+  const { data: pending } = useQuery<number>({
+    async queryFn() {
+      const res = await apiClient.get("/users/@me/relationships/pending-count");
+      return res.data.pending;
+    },
+    queryKey: queryKeyFactory.relationships.pendingCount(),
+  });
   return (
     <FriendsDialogContext.Provider value={{ setOpen }}>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant={"outline"} onClick={() => setOpen(true)}>
+          <Button
+            variant={"outline"}
+            onClick={() => setOpen(true)}
+            className="relative"
+          >
             <PlusIcon />
+            {pending ? (
+              <span className="w-4 h-4 rounded-full bg-red-600 text-white  absolute -right-2 -bottom-2 p-0.5 text-xs flex items-center justify-center">
+                {pending}
+              </span>
+            ) : null}
           </Button>
         </DialogTrigger>
         <DialogContent className="h-[400px] overflow-hidden">
@@ -125,14 +121,14 @@ function FriendList() {
     data: relationships,
     refetch,
     isLoading,
-  } = useQuery<any[]>({
+  } = useQuery<Relationship[]>({
     queryFn: async () => {
       const res = await apiClient.get("/users/@me/relationships?type=friends", {
         params: { q: search },
       });
       return res.data;
     },
-    queryKey: queryFactory.friends.list(search),
+    queryKey: queryFactory.relationships.list(search),
   });
 
   const context = useContext(FriendsDialogContext)!;
@@ -143,7 +139,7 @@ function FriendList() {
   }, [debouncedSearch, refetch]);
   // TODO: Add loading state
 
-  async function createChat(recipient_id: number) {
+  async function createChat(recipient_id: string) {
     // TODO: Make prisma shared dep (so we can import types here)
     const res = await apiClient.post("/users/@me/chats", {
       recipient_id,
@@ -166,17 +162,13 @@ function FriendList() {
             <Loader />
           ) : relationships && relationships.length > 0 ? (
             relationships.map((relationship) => {
-              const otherUser =
+              const otherUser: User =
                 relationship.senderId == user?.id
                   ? relationship.Recipient
                   : relationship.Sender;
               return (
                 <Entry key={otherUser.id}>
-                  <UserComponent
-                    avatar=""
-                    name={otherUser.name || "Undefined"}
-                    username={otherUser.username}
-                  />
+                  <UserUI {...otherUser} />
                   <Button
                     className="ml-auto"
                     onClick={() => createChat(otherUser.id)}
@@ -195,13 +187,6 @@ function FriendList() {
   );
 }
 
-type FriendRequest = {
-  id: number;
-  sender: User;
-  receiver: User;
-  isSender: boolean;
-};
-
 function PendingRequests() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 200);
@@ -209,29 +194,35 @@ function PendingRequests() {
     data: requests,
     refetch,
     isLoading,
-  } = useQuery<FriendRequest[]>({
+  } = useQuery<Relationship[]>({
     queryFn: async () => {
       const res = await apiClient.get("/users/@me/relationships?type=pending", {
         params: { q: search },
       });
       return res.data;
     },
-    queryKey: queryFactory.friends.requests(search),
+    queryKey: queryFactory.relationships.requests(search),
   });
 
   useEffect(() => {
     refetch();
   }, [debouncedSearch, refetch]);
 
-  async function acceptFriendRequest(requestId: number) {
-    await axios.post(`/api/friends/requests/${requestId}/accept`);
+  async function acceptFriendRequest(requestId: string) {
+    await apiClient.patch(
+      `/users/@me/relationships/${requestId}?action=accept`,
+    );
     refetch();
   }
 
-  async function rejectFriendRequest(requestId: number) {
-    await axios.post(`/api/friends/requests/${requestId}/reject`);
+  async function rejectFriendRequest(requestId: string) {
+    await apiClient.patch(
+      `/users/@me/relationships/${requestId}?action=reject`,
+    );
     refetch();
   }
+
+  const { user } = useUser();
 
   return (
     <>
@@ -248,19 +239,17 @@ function PendingRequests() {
           <div className="space-y-2 p-1 pr-4">
             {requests && requests.length > 0 ? (
               requests.map((request) => {
-                const other = request.isSender
-                  ? request.receiver
-                  : request.sender;
+                const isSender = request.senderId == user!.id;
+                const other: User =
+                  request.senderId == user!.id
+                    ? request.Recipient
+                    : request.Sender;
                 return (
                   <Entry key={request.id}>
-                    <UserComponent
-                      avatar=""
-                      name={other.name || "Undefined"}
-                      username={other.username}
-                    />
+                    <UserUI {...other} />
                     <div className="flex gap-1 ml-auto">
                       {/* TODO: Separate button components for better state management */}
-                      {!request.isSender && (
+                      {!isSender && (
                         <Button
                           size={"icon"}
                           variant="outline"
@@ -290,77 +279,47 @@ function PendingRequests() {
   );
 }
 
-function SendFriendRequestButton({ username }: { username: string }) {
-  const {
-    mutateAsync: sendFriendRequest,
-    isSuccess,
-    isLoading,
-  } = useMutation({
+function AddFriend() {
+  const [relationship, setRelationship] = useState<Relationship>();
+  const { mutateAsync } = useMutation({
     async mutationFn(username: string) {
-      await axios.post("/api/friends/requests", {
+      const res = await apiClient.post("/users/@me/relationships", {
         username,
       });
+      return res.data as Relationship;
+    },
+    onSuccess(data) {
+      setRelationship(data);
     },
   });
 
-  return (
-    <Button
-      onClick={() => sendFriendRequest(username)}
-      disabled={isLoading || isSuccess}
-    >
-      Send Request
-    </Button>
-  );
-}
-
-function AddFriend() {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounced(search, 200);
-  const { data: users, refetch } = useQuery<User[]>({
-    queryFn: async () => {
-      const res = await axios.get("/api/users/search", {
-        params: { q: search },
-      });
-      return res.data;
-    },
-    enabled: search.length > 0,
-    queryKey: queryFactory.users.search(search),
-  });
 
-  useEffect(() => {
-    refetch();
-  }, [debouncedSearch, refetch]);
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await mutateAsync(search);
+    setSearch("");
+  }
 
   return (
     <>
-      <Input
-        placeholder="Search by username eg. wiperr, sachin"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-4"
-      />
-      <ScrollArea>
-        <div className="space-y-2 p-1 pr-4">
-          {users && users.length > 0 ? (
-            users.map((user) => (
-              <Entry key={user.id}>
-                <UserComponent
-                  avatar=""
-                  name={user.name || "Undefined"}
-                  username={user.username}
-                />
-                <SendFriendRequestButton username={user.username} />
-              </Entry>
-            ))
-          ) : search.length > 0 ? (
-            <div className="text-center text-gray-500">No Results</div>
-          ) : (
-            <div className="text-center text-gray-500">
-              Search for users to add as friends
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+      <form className="flex gap-2" onSubmit={onSubmit}>
+        <Input
+          placeholder="Search by username eg. wiperr, sachin"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mb-4 flex-grow items-center"
+        />
+        <Button type="submit" className="w-full max-w-[100px]">
+          Add
+        </Button>
+      </form>
+      {relationship && (
+        <span className="text-lime-500 text-sm">
+          Friend request sent to @{relationship.Recipient.username} (
+          {relationship.Recipient.name})
+        </span>
+      )}
     </>
   );
 }

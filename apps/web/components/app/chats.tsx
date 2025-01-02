@@ -4,7 +4,7 @@ import { useUser } from "@/contexts/app/user-provider";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 import { ScrollArea } from "../ui/scroll-area";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function Message({
   content,

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { SendFriendRequest } from "../../types";
 import prisma from "@repo/db/client";
 import z from "zod";
+import redis from "@repo/redis/client";
 export const router = Router();
 
 router.post("/", async (req, res) => {
@@ -34,7 +35,7 @@ router.post("/", async (req, res) => {
 
   if (relationship && relationship.senderId == senderId) {
     // Request already sent
-    res.status(400).json({ message: "Request already sent" });
+    res.json(relationship);
     return;
   }
 
@@ -64,7 +65,7 @@ router.post("/", async (req, res) => {
       Sender: true,
     },
   });
-
+  await redis.publish("relationship:new", JSON.stringify(relationship));
   res.json(relationship);
 });
 
@@ -109,12 +110,17 @@ router.patch("/:id", async (req, res) => {
     .parseAsync(req.query.action);
 
   var relationship = await prisma.relationship.findFirst({
-    where: { id: req.params.id, recipientId: req.userId },
+    where: { id: req.params.id },
     include: { Recipient: true, Sender: true },
   });
 
   if (!relationship) {
     res.status(404).json({ message: "Relation not found" });
+    return;
+  }
+
+  if (relationship.senderId == req.userId && action == "accept") {
+    res.status(400).json({ message: "You cannot accept this request" });
     return;
   }
 
@@ -153,4 +159,11 @@ router.delete("/:id", async (req, res) => {
 
   await prisma.relationship.delete({ where: { id: relationship.id } });
   res.json({});
+});
+
+router.get("/pending-count", async (req, res) => {
+  const pending = await prisma.relationship.count({
+    where: { recipientId: req.userId, seen: false },
+  });
+  res.json({ pending });
 });

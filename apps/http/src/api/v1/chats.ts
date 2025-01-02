@@ -52,7 +52,10 @@ router.get("/", async (req, res) => {
     where: {
       Recipients: { some: { id: req.userId } },
     },
-    include: { Recipients: true },
+    include: {
+      Recipients: true,
+      _count: { select: { Message: { where: { seen: false } } } },
+    },
   });
   res.json(chats);
 });

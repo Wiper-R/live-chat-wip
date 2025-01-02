@@ -1,10 +1,12 @@
 import { Server } from "socket.io";
 import { SocketUser } from "./user";
-import redis from "@repo/redis/client";
-import { Message } from "@repo/api-types";
-import { UserManager } from "./user-manager";
+import { RedisHandler } from "./redis";
 
 const io = new Server({ addTrailingSlash: false });
+
+// Initialize redis handler, for the notifications sytem
+new RedisHandler();
+
 io.on("connection", async (socket) => {
   try {
     var user = await SocketUser.create(socket);
@@ -15,25 +17,6 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async () => {
     await user.destroy();
   });
-});
-
-redis.subscribe("message:create", (err, count) => {
-  if (err) console.error(err);
-  console.log(`Subsribed to ${count} channels`);
-});
-
-function broadcastMessageCreate(message: Message) {
-  for (const recipient of message.Chat.Recipients) {
-    UserManager.broadcast(recipient.id, "message:create", message);
-  }
-}
-
-redis.on("message", (channel, message) => {
-  switch (channel) {
-    case "message:create":
-      broadcastMessageCreate(JSON.parse(message) as Message);
-      break;
-  }
 });
 
 io.listen(5001);

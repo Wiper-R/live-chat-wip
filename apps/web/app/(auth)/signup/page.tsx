@@ -10,10 +10,27 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FieldValues, useForm } from "react-hook-form";
+import { useMutation } from "react-query";
+import { apiClient } from "@/lib/api-client";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const form = useForm();
-  function onSubmit(values: FieldValues) {}
+  const router = useRouter();
+  const { mutateAsync } = useMutation({
+    async mutationFn(values: FieldValues) {
+      await apiClient.post("/signup", values);
+      return {};
+    },
+
+    onSuccess() {
+      router.push("/signin");
+    },
+  });
+
+  async function onSubmit(values: FieldValues) {
+    await mutateAsync(values);
+  }
   return (
     <div className="h-screen flex items-center justify-center">
       <Card className="max-w-[300px] w-full">
@@ -21,6 +38,18 @@ export default function Page() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="username"
@@ -46,7 +75,7 @@ export default function Page() {
                 )}
               />
               <Button type="submit" className="w-full">
-                Login
+                Sign-up
               </Button>
             </form>
           </Form>

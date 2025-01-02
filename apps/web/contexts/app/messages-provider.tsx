@@ -1,10 +1,9 @@
 "use client";
 import { createContext } from "@/lib/utils";
-import { PropsWithChildren, useEffect } from "react";
+import { PropsWithChildren, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import queryKeyFactory, { chats } from "@/lib/query-key-factory";
 import { apiClient } from "@/lib/api-client";
-import { useChatsContext } from "./chats-provider";
 import { useSocket } from "./socket-provider";
 import { Chat, Message } from "@repo/api-types";
 import { useRouter } from "next/navigation";
@@ -29,6 +28,10 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
     },
     queryKey: chats.messages(chatId),
   });
+  const messageAlert = useRef(new Audio("/sounds/new-message-alert.wav"));
+  useEffect(() => {
+    messageAlert.current.volume = 0.05;
+  }, []);
   const router = useRouter();
   const { data: selectedChat } = useQuery({
     async queryFn() {
@@ -44,6 +47,7 @@ export function MessagesProvider({ chatId, children }: MessageProviderProps) {
   const { socket } = useSocket();
 
   function handleMessageCreate(message: Message) {
+    messageAlert.current.play();
     queryClient.setQueryData(
       queryKeyFactory.chats.messages(message.chatId),
       (oldData: Message[] | undefined) => {

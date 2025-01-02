@@ -4,10 +4,12 @@ export const chats = {
   messages: (chatId: string) => [...chats.all, "messages", +chatId] as const,
 };
 
-export const friends = {
-  all: ["friends"] as const,
-  list: (query: string) => [...friends.all, "list", query] as const,
-  requests: (query: string) => [...friends.all, "requests", query] as const,
+export const relationships = {
+  all: ["relationships"] as const,
+  list: (query: string) => [...relationships.all, "list", query] as const,
+  requests: (query: string) =>
+    [...relationships.all, "requests", query] as const,
+  pendingCount: () => [...relationships.all, "pendingCount"],
 };
 
 export const users = {
@@ -16,4 +18,4 @@ export const users = {
   search: (query: string) => [...users.all, "search", query] as const,
 };
 
-export default { chats, friends, users };
+export default { chats, relationships, users };

@@ -18,6 +18,18 @@ export type Message = {
   Chat: Chat;
 };
 
+export type Relationship = {
+  id: string;
+  recipientId: string;
+  senderId: string;
+  status: "pending" | "accepted";
+  createdAt: Date;
+  updatedAt: Date;
+  Sender: User;
+  Recipient: User;
+  userIds: string[];
+};
+
 export type CallInitiateResponse = {
   callId: string;
   caller: User;
