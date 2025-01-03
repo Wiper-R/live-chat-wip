@@ -31,7 +31,7 @@ export const hash = async (password: string): Promise<string> => {
  */
 export const compare = async (
   password: string,
-  hash: string
+  hash: string,
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const [salt, hashKey] = hash.split(".");

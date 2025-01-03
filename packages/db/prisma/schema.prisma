@@ -31,11 +31,10 @@ model Message {
   chatId    String
   senderId  String
   createdAt DateTime @default(now())
-  seen      Boolean  @default(false)
   Sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   Chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
-  @@index([chatId, seen])
+  @@index([chatId, createdAt])
 }
 
 model Relationship {
@@ -45,12 +44,11 @@ model Relationship {
   status      RelationshipStatus @default(pending)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @default(now())
-  seen        Boolean            @default(false)
   Sender      User               @relation(name: "OutgoingRelationship", fields: [senderId], references: [id], onDelete: Cascade)
   Recipient   User               @relation(name: "IncomingRelationship", fields: [recipientId], references: [id], onDelete: Cascade)
   userIds     String[]           @unique
 
-  @@index([recipientId, seen])
+  @@index([recipientId, createdAt])
 }
 
 enum RelationshipStatus {
