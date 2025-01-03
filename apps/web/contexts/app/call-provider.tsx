@@ -43,7 +43,6 @@ export function CallProvider({ children }: PropsWithChildren) {
   const { user } = useUser();
   const outgoingCallAudio = useRef(new Audio("/sounds/outgoing-call.wav"));
 
-  // Play sound based on state
   useEffect(() => {
     if (callType == "outgoing" && callState?.state == "outgoing") {
       outgoingCallAudio.current.play();
@@ -102,7 +101,7 @@ export function CallProvider({ children }: PropsWithChildren) {
     const request: CallAnswerRequest = {
       callId: callState.callId,
     };
-    socket.emit("call:answer:accepted", request);
+    socket.emit("call:answer", request);
   }, [callState, socket]);
 
   const rejectCall = useCallback(async () => {

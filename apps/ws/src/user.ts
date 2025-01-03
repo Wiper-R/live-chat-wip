@@ -59,7 +59,7 @@ export class SocketUser {
       CallManager.broadcast(call.id, "all", "call:initiate", response);
     });
 
-    this.socket.on("call:answer:accepted", ({ callId }: CallAnswerRequest) => {
+    this.socket.on("call:answer", ({ callId }: CallAnswerRequest) => {
       const call = CallManager.getCall(callId);
       if (!call) return;
       // TODO: Return a error to accepter that call is already dropped

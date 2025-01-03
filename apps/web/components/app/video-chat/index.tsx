@@ -17,6 +17,16 @@ export function VideoChatComponent({ hangup }: VideoChatProps) {
   const { socket } = useSocket();
   const { stream } = useMediaStream();
   const [remoteStream, setRemoteStream] = useState<MediaStream>();
+
+  const peerRef = useRef<RTCPeerConnection>(
+    new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.stunprotocol.org",
+        },
+      ],
+    }),
+  );
   useEffect(() => {
     remoteVideoRef.current.srcObject = remoteStream || null;
   }, [remoteStream]);
@@ -32,16 +42,6 @@ export function VideoChatComponent({ hangup }: VideoChatProps) {
       peerRef.current.close();
     };
   }, [stream]);
-
-  const peerRef = useRef<RTCPeerConnection>(
-    new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.stunprotocol.org",
-        },
-      ],
-    }),
-  );
 
   useEffect(() => {
     if (!stream) return;

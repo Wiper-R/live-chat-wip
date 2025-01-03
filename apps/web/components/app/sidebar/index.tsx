@@ -1,11 +1,11 @@
 "use client";
 import { Input } from "@/components/ui/input";
-import { FriendsDialog } from "./friends-dialog";
+import { FriendsDialog } from "../friends-dialog";
 import { useChatsContext } from "@/contexts/app/chats-provider";
 import Link from "next/link";
 import { useUser } from "@/contexts/app/user-provider";
-import { ScrollArea } from "../ui/scroll-area";
-import { UserUI } from "./user";
+import { ScrollArea } from "../../ui/scroll-area";
+import { UserUI } from "./../user";
 
 function SideToolbox() {
   const { user } = useUser();
