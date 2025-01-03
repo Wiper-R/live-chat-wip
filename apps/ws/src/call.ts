@@ -19,6 +19,6 @@ export class Call {
   }
 
   static getRecipient(chat: Chat, caller: User) {
-    return chat.Recipients.find((u) => u.id != caller.id);
+    return chat.Recipients.find((u) => u.User.id != caller.id);
   }
 }

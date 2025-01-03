@@ -5,6 +5,7 @@ import { VideoIcon } from "lucide-react";
 import { useCall } from "@/contexts/app/call-provider";
 import { useMessagesContext } from "@/contexts/app/messages-provider";
 import { UserUI } from "./user";
+import { ChatUser } from "@repo/api-types";
 
 function VideoCallButton() {
   const { call } = useCall();
@@ -20,7 +21,9 @@ export function ChatPanelTopBar() {
   const { user } = useUser();
   const { selectedChat } = useMessagesContext();
   if (!selectedChat) return null;
-  const chatUser = selectedChat.Recipients.find((u: any) => user?.id != u.id)!;
+  const chatUser = selectedChat.Recipients.find(
+    (u: ChatUser) => user?.id != u.User.id,
+  )?.User!;
   return (
     <div className="p-4 flex gap-2 items-center border-b ">
       <UserUI {...chatUser} />

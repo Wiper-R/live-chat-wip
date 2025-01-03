@@ -27,6 +27,9 @@
     },
     "db:studio": {
       "dependsOn": ["^db:studio"]
+    },
+    "db:reset": {
+      "dependsOn": ["^db:reset"]
     }
   }
 }

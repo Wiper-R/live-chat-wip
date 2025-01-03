@@ -163,7 +163,7 @@ router.delete("/:id", async (req, res) => {
 
 router.get("/pending-count", async (req, res) => {
   const pending = await prisma.relationship.count({
-    where: { recipientId: req.userId, seen: false },
+    where: { recipientId: req.userId, status: "pending" },
   });
   res.json({ pending });
 });

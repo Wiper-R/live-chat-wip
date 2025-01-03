@@ -49,7 +49,7 @@ export class SocketUser {
         });
         return;
       }
-      const call = new Call(this.user, recipient, chat);
+      const call = new Call(this.user, recipient.User, chat);
       const response: CallInitiateResponse = {
         chat,
         callId: call.id,

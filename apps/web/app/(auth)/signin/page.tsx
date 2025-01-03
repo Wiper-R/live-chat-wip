@@ -5,19 +5,21 @@ import {
   FormItem,
   FormLabel,
   Form,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
 import { FieldValues, useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "react-query";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import queryKeyFactory from "@/lib/query-key-factory";
 import { User } from "@repo/api-types";
 import { useUser } from "@/contexts/app/user-provider";
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Loader } from "@/components/loader";
+import Link from "next/link";
 
 export default function Page() {
   const { user, isLoading } = useUser();
@@ -53,7 +55,7 @@ export default function Page() {
 
   return (
     <div className="h-screen flex items-center justify-center">
-      <Card className="max-w-[300px] w-full">
+      <Card className="max-w-[400px] w-full">
         <CardHeader>Login</CardHeader>
         <CardContent>
           <Form {...form}>
@@ -85,6 +87,19 @@ export default function Page() {
               <Button type="submit" className="w-full">
                 Login
               </Button>
+              <FormDescription>
+                {"Don't have an account?"}{" "}
+                <Link
+                  className={buttonVariants({
+                    variant: "link",
+                    className: "px-0.5",
+                  })}
+                  href={"/signup"}
+                >
+                  click here
+                </Link>{" "}
+                to sign up
+              </FormDescription>
             </form>
           </Form>
         </CardContent>

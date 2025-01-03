@@ -3,6 +3,7 @@ import { authMiddleware } from "../../middleware/auth";
 import { CreateChat, CreateMessage } from "../../types";
 import prisma from "@repo/db/client";
 import redis from "@repo/redis/client";
+import { Chat, Message } from "@repo/api-types";
 
 export const router = Router();
 router.use(authMiddleware);
@@ -11,25 +12,25 @@ router.post("/", async (req, res) => {
   const data = await CreateChat.parseAsync(req.body);
 
   // TODO: check if recipient is friend
-  var chat;
+  var chat: Chat;
   try {
     chat = await prisma.chat.findFirstOrThrow({
       where: {
         AND: [
-          { Recipients: { some: { id: req.userId } } },
-          { Recipients: { some: { id: data.recipient_id } } },
+          { Recipients: { some: { User: { id: req.userId } } } },
+          { Recipients: { some: { User: { id: data.recipient_id } } } },
         ],
       },
-      include: { Recipients: true },
+      include: { Recipients: { include: { User: true } } },
     });
   } catch (e) {
     chat = await prisma.chat.create({
       data: {
         Recipients: {
-          connect: [{ id: req.userId }, { id: data.recipient_id }],
+          create: [{ userId: req.userId! }, { userId: data.recipient_id }],
         },
       },
-      include: { Recipients: true },
+      include: { Recipients: { include: { User: true } } },
     });
   }
   res.json(chat);
@@ -37,9 +38,9 @@ router.post("/", async (req, res) => {
 
 router.get("/:chatId", async (req, res) => {
   try {
-    const chat = await prisma.chat.findUniqueOrThrow({
+    const chat: Chat = await prisma.chat.findUniqueOrThrow({
       where: { id: req.params.chatId },
-      include: { Recipients: true },
+      include: { Recipients: { include: { User: true } } },
     });
     res.json(chat);
   } catch (e) {
@@ -48,13 +49,12 @@ router.get("/:chatId", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const chats = await prisma.chat.findMany({
+  const chats: Chat[] = await prisma.chat.findMany({
     where: {
-      Recipients: { some: { id: req.userId } },
+      Recipients: { some: { User: { id: req.userId } } },
     },
     include: {
-      Recipients: true,
-      _count: { select: { Message: { where: { seen: false } } } },
+      Recipients: { include: { User: true } },
     },
   });
   res.json(chats);
@@ -66,7 +66,7 @@ router.get("/:chatId/messages", async (req, res) => {
     await prisma.chat.findUnique({
       where: {
         id: req.params.chatId,
-        Recipients: { some: { id: req.userId } },
+        Recipients: { some: { User: { id: req.userId } } },
       },
     });
   } catch (e) {
@@ -78,6 +78,13 @@ router.get("/:chatId/messages", async (req, res) => {
     where: { chatId: req.params.chatId },
     orderBy: { createdAt: "asc" },
     include: { Sender: true },
+  });
+
+  await prisma.chatUser.update({
+    where: {
+      chatId_userId: { chatId: req.params.chatId, userId: req.userId! },
+    },
+    data: { lastSeenAt: new Date() },
   });
 
   res.json(messages);
@@ -97,7 +104,7 @@ router.post("/:chatId/messages", async (req, res) => {
     return;
   }
 
-  const message = await prisma.message.create({
+  const message: Message = await prisma.message.create({
     data: {
       content: data.content,
       senderId: req.userId!,
@@ -107,7 +114,7 @@ router.post("/:chatId/messages", async (req, res) => {
       Sender: true,
       Chat: {
         include: {
-          Recipients: true,
+          Recipients: { include: { User: true } },
         },
       },
     },

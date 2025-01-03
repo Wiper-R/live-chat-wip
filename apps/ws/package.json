@@ -1,7 +1,8 @@
 {
   "name": "ws",
   "scripts": {
-    "dev": "nodemon ./src/index.ts"
+    "dev": "nodemon ./src/index.ts",
+    "check-types": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

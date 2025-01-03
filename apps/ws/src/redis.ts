@@ -30,7 +30,7 @@ export class RedisHandler {
   }
   broadcastMessageCreate(message: Message) {
     for (const recipient of message.Chat.Recipients) {
-      UserManager.broadcast(recipient.id, "message:create", message);
+      UserManager.broadcast(recipient.User.id, "message:create", message);
     }
   }
 

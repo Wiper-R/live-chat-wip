@@ -4,18 +4,26 @@ export type User = {
   name: string;
 };
 
+export type ChatUser = {
+  id: string;
+  chatId: string;
+  lastSeenAt: Date;
+  userId: string;
+  User: User;
+};
+
 export type Chat = {
   id: string;
-  Recipients: User[];
+  Recipients: ChatUser[];
 };
 
 export type Message = {
   id: string;
   content: string;
-  createdAt: string;
   senderId: string;
   chatId: string;
   Chat: Chat;
+  createdAt: Date;
 };
 
 export type Relationship = {

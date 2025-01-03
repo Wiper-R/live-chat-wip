@@ -60,6 +60,9 @@ importers:
         specifier: ^3.24.1
         version: 3.24.1
     devDependencies:
+      '@repo/api-types':
+        specifier: workspace:*
+        version: link:../../packages/api-types
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
