@@ -84,7 +84,7 @@ router.get("/:chatId/messages", async (req, res) => {
     where: {
       chatId_userId: { chatId: req.params.chatId, userId: req.userId! },
     },
-    data: { lastSeenAt: new Date() },
+    data: { lastSeenAt: new Date(), unreadMessages: 0 },
   });
 
   res.json(messages);
@@ -110,6 +110,7 @@ router.post("/:chatId/messages", async (req, res) => {
       senderId: req.userId!,
       chatId: req.params.chatId,
     },
+
     include: {
       Sender: true,
       Chat: {
@@ -119,6 +120,15 @@ router.post("/:chatId/messages", async (req, res) => {
       },
     },
   });
+
+  for (const recipient of message.Chat.Recipients) {
+    if (recipient.lastSeenAt < message.createdAt) {
+      await prisma.chatUser.update({
+        where: { id: recipient.id },
+        data: { unreadMessages: { increment: 1 } },
+      });
+    }
+  }
   await redis.publish("message:create", JSON.stringify(message));
   res.status(201).json(message);
 });

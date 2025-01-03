@@ -10,6 +10,7 @@ export type ChatUser = {
   lastSeenAt: Date;
   userId: string;
   User: User;
+  unreadMessages: number;
 };
 
 export type Chat = {

@@ -4,17 +4,10 @@ import { useUser } from "@/contexts/app/user-provider";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 import { ScrollArea } from "../ui/scroll-area";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { Message as MessageAPI } from "@repo/api-types";
 
-function Message({
-  content,
-  createdAt,
-  senderId,
-}: {
-  senderId: string;
-  content: string;
-  createdAt: string;
-}) {
+function Message({ content, createdAt, senderId }: MessageAPI) {
   const { user } = useUser();
   const isSender = user?.id == senderId;
   return (
@@ -46,11 +39,7 @@ export function Chats() {
       <div className="flex flex-col overflow-auto flex-grow w-full p-8 gap-2">
         {messages.map((message) => (
           <div key={message.id} className="w-full flex">
-            <Message
-              content={message.content}
-              createdAt={message.createdAt}
-              senderId={message.senderId}
-            />
+            <Message {...message} />
           </div>
         ))}
       </div>

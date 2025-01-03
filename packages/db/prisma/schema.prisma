@@ -27,7 +27,8 @@ model ChatUser {
   User   User   @relation(fields: [userId], references: [id])
   userId String
 
-  lastSeenAt DateTime @default(now())
+  unreadMessages Int      @default(0)
+  lastSeenAt     DateTime @default(now())
 
   @@unique([chatId, userId])
 }
