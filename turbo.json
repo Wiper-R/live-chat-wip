@@ -16,20 +16,23 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true,
-      "env": ["SERVER_PORT"]
+      "persistent": true
     },
     "db:generate": {
-      "dependsOn": ["^db:generate"]
+      "dependsOn": ["^db:generate"],
+      "cache": false
     },
     "db:push": {
-      "dependsOn": ["^db:push"]
+      "dependsOn": ["^db:push"],
+      "cache": false
     },
     "db:studio": {
-      "dependsOn": ["^db:studio"]
+      "dependsOn": ["^db:studio"],
+      "cache": false
     },
     "db:reset": {
-      "dependsOn": ["^db:reset"]
+      "dependsOn": ["^db:reset"],
+      "cache": false
     }
   }
 }

@@ -14,8 +14,11 @@ export function IncomingCallDialog({
   rejectCall,
 }: IncomingCallDialogProps) {
   return (
-    <Dialog defaultOpen>
-      <DialogContent className="max-w-[400px] flex flex-col items-center">
+    <Dialog open>
+      <DialogContent
+        hideClose
+        className="max-w-[400px] flex flex-col items-center"
+      >
         <DialogTitle>Incoming Call</DialogTitle>
         <div className="w-24 h-24 rounded-full bg-gray-500" />
         <div>{caller.name} is calling</div>

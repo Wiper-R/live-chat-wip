@@ -90,6 +90,11 @@ export function CallProvider({ children }: PropsWithChildren) {
     [setCallState],
   );
 
+  const onCallEnded = useCallback(() => {
+    setCallState(undefined);
+    setCallType(undefined);
+  }, [setCallType, setCallState]);
+
   const acceptCall = useCallback(async () => {
     if (!callState || callState.state != "incoming") {
       return;
@@ -100,16 +105,26 @@ export function CallProvider({ children }: PropsWithChildren) {
     socket.emit("call:answer:accepted", request);
   }, [callState, socket]);
 
+  const rejectCall = useCallback(async () => {
+    if (!callState) return;
+    socket.emit("call:end", {
+      callId: callState.callId,
+      reason: "Receiver rejected the call",
+    });
+  }, [callState, socket]);
+
   useEffect(() => {
     socket.on("call:initiate", onCallInitiate);
     socket.on("call:answer", onCallAnswer);
     socket.on("call:connected", onCallConnected);
+    socket.on("call:ended", onCallEnded);
     return () => {
       socket.off("call:answer", onCallAnswer);
       socket.off("call:connected", onCallConnected);
       socket.off("call:initiate", onCallInitiate);
+      socket.off("call:ended", onCallEnded);
     };
-  }, [socket, onCallAnswer, onCallConnected, onCallInitiate]);
+  }, [socket, onCallAnswer, onCallConnected, onCallInitiate, onCallEnded]);
 
   return (
     <Context.Provider
@@ -123,14 +138,14 @@ export function CallProvider({ children }: PropsWithChildren) {
       {callState?.state == "incoming" && (
         <IncomingCallDialog
           caller={callState.caller}
-          rejectCall={() => {}}
           acceptCall={acceptCall}
+          rejectCall={rejectCall}
         />
       )}
       {callState?.state == "outgoing" && (
-        <OutgoingCallDialog callee={callState.caller} hangUp={() => {}} />
+        <OutgoingCallDialog callee={callState.caller} hangUp={rejectCall} />
       )}
-      {callState?.state == "ongoing" && <VideoChat />}
+      {callState?.state == "ongoing" && <VideoChat hangup={rejectCall} />}
     </Context.Provider>
   );
 }

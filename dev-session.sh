@@ -13,8 +13,11 @@ tmux send-keys -t live-chat:lazygit 'lazygit' Enter
 
 # Start Prisma Studio
 tmux new-window -t live-chat -n studio
-tmux send-keys -t live-chat:studio 'cd ./shared' Enter
 tmux send-keys -t live-chat:studio 'pnpm db:studio' Enter
+
+# Start Services (Redis, Postgres)
+tmux new-window -t live-chat -n docker
+tmux send-keys -t live-chat:docker 'docker compose up' Enter
 
 # Switch window to lazygit
 tmux select-window -t live-chat:nvim

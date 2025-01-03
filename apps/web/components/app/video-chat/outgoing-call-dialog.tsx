@@ -12,8 +12,11 @@ export function OutgoingCallDialog({
   hangUp,
 }: OutgoingCallDialogProps) {
   return (
-    <Dialog defaultOpen>
-      <DialogContent className="max-w-[400px] flex flex-col items-center">
+    <Dialog open>
+      <DialogContent
+        className="max-w-[400px] flex flex-col items-center"
+        hideClose
+      >
         <DialogTitle>Outgoing Call</DialogTitle>
         <div className="w-24 h-24 rounded-full bg-gray-500" />
         <div>Calling {callee.name}</div>

@@ -122,6 +122,14 @@ export class SocketUser {
         );
       },
     );
+    this.socket.on(
+      "call:end",
+      ({ callId, reason }: { callId: string; reason: string }) => {
+        const call = CallManager.getCall(callId);
+        if (!call) return;
+        CallManager.endCall(call, reason);
+      },
+    );
   }
 
   registerListeners() {

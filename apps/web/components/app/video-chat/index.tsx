@@ -6,7 +6,11 @@ import { MicIcon, PhoneOff, VideoIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-export function VideoChatComponent() {
+type VideoChatProps = {
+  hangup: () => void;
+};
+
+export function VideoChatComponent({ hangup }: VideoChatProps) {
   const remoteVideoRef = useRef<HTMLVideoElement>(null!);
   const localVideoRef = useRef<HTMLVideoElement>(null!);
   const { callState, callType } = useCall();
@@ -14,9 +18,20 @@ export function VideoChatComponent() {
   const { stream } = useMediaStream();
   const [remoteStream, setRemoteStream] = useState<MediaStream>();
   useEffect(() => {
-    localVideoRef.current.srcObject = stream || null;
     remoteVideoRef.current.srcObject = remoteStream || null;
-  }, [stream, remoteStream]);
+  }, [remoteStream]);
+
+  useEffect(() => {
+    localVideoRef.current.srcObject = stream || null;
+  }, [stream]);
+
+  useEffect(() => {
+    return () => {
+      if (!stream) return;
+      stream.getTracks().forEach((t) => t.stop());
+      peerRef.current.close();
+    };
+  }, [stream]);
 
   const peerRef = useRef<RTCPeerConnection>(
     new RTCPeerConnection({
@@ -137,7 +152,7 @@ export function VideoChatComponent() {
         <Button size="icon">
           <VideoIcon />
         </Button>
-        <Button variant="destructive" size="icon">
+        <Button variant="destructive" size="icon" onClick={hangup}>
           <PhoneOff />
         </Button>
       </div>
@@ -145,11 +160,17 @@ export function VideoChatComponent() {
   );
 }
 
-export function VideoChat() {
+export function VideoChat(props: VideoChatProps) {
   const [videoPortal, setVideoPortal] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setVideoPortal(document.getElementById("call-portal"));
+
+    return () => {
+      setVideoPortal(null);
+    };
   }, []);
 
-  return videoPortal ? createPortal(<VideoChatComponent />, videoPortal) : null;
+  return videoPortal
+    ? createPortal(<VideoChatComponent {...props} />, videoPortal)
+    : null;
 }
